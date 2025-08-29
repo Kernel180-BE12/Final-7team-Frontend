@@ -1,1 +1,1 @@
-// dashboard.tsx
+export { default as AdminDashboard } from "./AdminDashboard";
