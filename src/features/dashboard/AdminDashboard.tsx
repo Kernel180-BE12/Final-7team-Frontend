@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useAppStore } from "@/store/appStore";
 import { ScheduleManagement } from "../schedule";
 import { KeywordExtraction } from "../keyword";
 import { ProductSearchCrawling } from "../product";
@@ -9,7 +10,7 @@ import { PublishingManagement } from "../publishing";
 import { ResultMonitoring } from "../monitoring";
 
 export default function AdminDashboard() {
-  const [activeNav, setActiveNav] = useState("대시보드");
+  const { activeNav, setActiveNav } = useAppStore();
 
   useEffect(() => {
     // 진행률 애니메이션
