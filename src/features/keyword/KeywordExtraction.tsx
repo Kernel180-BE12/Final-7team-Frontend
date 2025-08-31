@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAppStore } from "@/store/appStore"
 
 export default function KeywordExtraction() {
+  const { keywords } = useAppStore()
+
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardHeader>
@@ -13,30 +16,24 @@ export default function KeywordExtraction() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <div className="flex-1">
-              <div className="font-medium text-sm">트렌드 키워드 수집 완료</div>
-              <div className="text-xs text-gray-600">상위 50개 키워드 추출 성공</div>
+          {keywords.logs.map((log, index) => (
+            <div key={log.id} className={`flex justify-between items-center py-3 ${index < keywords.logs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+              <div className="flex-1">
+                <div className="font-medium text-sm">{log.title}</div>
+                <div className="text-xs text-gray-600">{log.description}</div>
+              </div>
+              <div className="text-xs text-gray-600">{log.timestamp}</div>
             </div>
-            <div className="text-xs text-gray-600">08:00</div>
-          </div>
-
-          <div className="flex justify-between items-center py-3">
-            <div className="flex-1">
-              <div className="font-medium text-sm">선택된 키워드: "겨울 패딩"</div>
-              <div className="text-xs text-gray-600">우선순위 1위 키워드 자동 선택</div>
-            </div>
-            <div className="text-xs text-gray-600">08:01</div>
-          </div>
+          ))}
         </div>
 
         <div className="flex justify-between mt-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">50</div>
+            <div className="text-2xl font-bold text-gray-700">{keywords.collectedKeywords}</div>
             <div className="text-xs text-gray-600">수집 키워드</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">1</div>
+            <div className="text-2xl font-bold text-gray-700">{keywords.selectedKeywords}</div>
             <div className="text-xs text-gray-600">선택 키워드</div>
           </div>
         </div>
