@@ -1,6 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAppStore } from "@/store/appStore"
 
 export default function ResultMonitoring() {
+  const { monitoring } = useAppStore()
+
+  const getStatusBadge = (type: 'success' | 'failure' | 'pending') => {
+    switch (type) {
+      case 'success':
+        return (
+          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+            성공
+          </span>
+        )
+      case 'failure':
+        return (
+          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+            실패
+          </span>
+        )
+      case 'pending':
+        return (
+          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+            대기중
+          </span>
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardHeader>
@@ -14,37 +42,29 @@ export default function ResultMonitoring() {
       <CardContent>
         <div className="flex justify-between mb-6">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">23</div>
+            <div className="text-2xl font-bold text-gray-700">{monitoring.successCount}</div>
             <div className="text-xs text-gray-600">성공 발행</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">2</div>
+            <div className="text-2xl font-bold text-gray-700">{monitoring.failureCount}</div>
             <div className="text-xs text-gray-600">실패 발행</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">92%</div>
+            <div className="text-2xl font-bold text-gray-700">{monitoring.successRate}%</div>
             <div className="text-xs text-gray-600">성공률</div>
           </div>
         </div>
 
         <div className="space-y-3">
-          <div className="flex justify-between items-center py-3 border-b border-gray-100">
-            <div className="flex-1">
-              <div className="font-medium text-sm">발행 완료</div>
-              <div className="text-xs text-gray-600">겨울 패딩 관련 블로그 글 게시 성공</div>
+          {monitoring.recentLogs.map((log, index) => (
+            <div key={log.id} className={`flex justify-between items-center py-3 ${index < monitoring.recentLogs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+              <div className="flex-1">
+                <div className="font-medium text-sm">{log.title}</div>
+                <div className="text-xs text-gray-600">{log.description}</div>
+              </div>
+              {getStatusBadge(log.type)}
             </div>
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">성공</span>
-          </div>
-
-          <div className="flex justify-between items-center py-3">
-            <div className="flex-1">
-              <div className="font-medium text-sm">다음 스케줄 대기</div>
-              <div className="text-xs text-gray-600">내일 08:00 자동 실행 예정</div>
-            </div>
-            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
-              대기중
-            </span>
-          </div>
+          ))}
         </div>
       </CardContent>
     </Card>
