@@ -15,8 +15,9 @@ export function ApiTest() {
       const result = await apiClient.get("/test");
       setResponse(result.data);
       console.log("백엔드 응답:", result.data);
-    } catch (err: any) {
-      setError(`연결 실패: ${err.message}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
+      setError(`연결 실패: ${errorMessage}`);
       console.error("API 에러:", err);
     } finally {
       setLoading(false);
