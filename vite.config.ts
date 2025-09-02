@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -10,11 +9,12 @@ export default defineConfig({
     },
   },
   server: {
+    port: 3000, // 원하는 포트 번호
+    strictPort: true, // 포트가 사용중이면 다른 포트로 바꾸지 않고 에러 발생
     proxy: {
-      "/api": {
+      "/v1": {
         target: "http://localhost:8080",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },
