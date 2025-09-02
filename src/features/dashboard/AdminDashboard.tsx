@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
 import { ScheduleManagement } from "../schedule";
@@ -8,6 +6,7 @@ import { ProductSearchCrawling } from "../product";
 import { LLMContentGeneration } from "../content";
 import { PublishingManagement } from "../publishing";
 import { ResultMonitoring } from "../monitoring";
+import { ApiTest } from "@/components/ApiTest";
 
 export default function AdminDashboard() {
   const { activeNav, setActiveNav } = useAppStore();
@@ -78,6 +77,11 @@ export default function AdminDashboard() {
             <p className="text-gray-600 text-sm">
               ssadagu.kr 상품 기반 네이버 블로그 자동 발행 시스템
             </p>
+          </div>
+
+          {/* 백엔드 연결 테스트 */}
+          <div className="mb-8">
+            <ApiTest />
           </div>
 
           {/* 대시보드 그리드 */}
