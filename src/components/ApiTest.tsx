@@ -12,11 +12,17 @@ export function ApiTest() {
     setResponse("");
 
     try {
-      const result = await apiClient.get("/test");
+      const result = await apiClient.get("/dashboard/test", {
+        params: {
+          role: "admin",
+          userName: "테스트 사용자",
+        },
+      });
       setResponse(result.data);
       console.log("백엔드 응답:", result.data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
+      const errorMessage =
+        err instanceof Error ? err.message : "알 수 없는 오류";
       setError(`연결 실패: ${errorMessage}`);
       console.error("API 에러:", err);
     } finally {
