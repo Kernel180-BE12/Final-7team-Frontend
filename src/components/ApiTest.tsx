@@ -1,5 +1,6 @@
 import { useState } from "react";
 import apiClient from "@/lib/api";
+import type { DashboardTestParams } from "@/lib/types";
 
 export function ApiTest() {
   const [response, setResponse] = useState<string>("");
@@ -12,11 +13,13 @@ export function ApiTest() {
     setResponse("");
 
     try {
-      const result = await apiClient.get("/dashboard/test", {
-        params: {
-          role: "admin",
-          userName: "테스트 사용자",
-        },
+      const params: DashboardTestParams = {
+        role: "admin",
+        userName: "테스트 사용자",
+      };
+
+      const result = await apiClient.get<string>("/dashboard/test", {
+        params,
       });
       setResponse(result.data);
       console.log("백엔드 응답:", result.data);
