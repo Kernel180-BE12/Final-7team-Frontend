@@ -1,8 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppStore } from "@/store/appStore"
+
+// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+const dummyMonitoring = {
+  successCount: 23,
+  failureCount: 2,
+  successRate: 92,
+  recentLogs: [
+    {
+      id: '1',
+      title: '블로그 발행 성공',
+      description: '"겨울 패딩 추천" 글 발행 완료',
+      type: 'success' as 'success' | 'failure' | 'pending',
+    },
+    {
+      id: '2',
+      title: '이미지 업로드 실패',
+      description: '파일 크기 초과로 업로드 실패',
+      type: 'failure' as 'success' | 'failure' | 'pending',
+    },
+    {
+      id: '3',
+      title: '다음 발행 대기중',
+      description: '예약 시간: 내일 08:00',
+      type: 'pending' as 'success' | 'failure' | 'pending',
+    },
+  ],
+}
 
 export default function ResultMonitoring() {
-  const { monitoring } = useAppStore()
+  const monitoring = dummyMonitoring // 임시로 더미 데이터 사용
 
   const getStatusBadge = (type: 'success' | 'failure' | 'pending') => {
     switch (type) {
