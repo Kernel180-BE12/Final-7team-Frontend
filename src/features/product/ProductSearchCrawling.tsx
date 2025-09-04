@@ -1,8 +1,28 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppStore } from "@/store/appStore"
+
+// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+const dummyProductSearch = {
+  status: 'completed' as 'searching' | 'crawling' | 'completed',
+  targetSite: 'ssadagu.kr',
+  progress: 100,
+  logs: [
+    {
+      id: '1',
+      title: '"겨울 패딩" 키워드 검색 완료',
+      description: '총 25개 상품 검색됨',
+      timestamp: '08:02',
+    },
+    {
+      id: '2', 
+      title: '상품 정보 크롤링 진행중',
+      description: '15/25 상품 크롤링 완료',
+      timestamp: '08:03',
+    },
+  ],
+}
 
 export default function ProductSearchCrawling() {
-  const { productSearch } = useAppStore()
+  const productSearch = dummyProductSearch // 임시로 더미 데이터 사용
 
   const getStatusMessage = () => {
     switch (productSearch.status) {

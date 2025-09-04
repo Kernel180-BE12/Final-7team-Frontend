@@ -1,8 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppStore } from "@/store/appStore"
+
+// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+const dummyKeywords = {
+  collectedKeywords: 50,
+  selectedKeywords: 1,
+  selectedKeyword: '겨울 패딩',
+  keywords: ['겨울 패딩', '패딩 추천', '겨울 코트', '방한용품', '아우터'],
+  logs: [
+    {
+      id: '1',
+      title: '트렌드 키워드 수집 완료',
+      description: '상위 50개 키워드 추출 성공',
+      timestamp: '08:00',
+    },
+    {
+      id: '2',
+      title: '선택된 키워드: "겨울 패딩"',
+      description: '우선순위 1위 키워드 자동 선택',
+      timestamp: '08:01',
+    },
+  ],
+}
 
 export default function KeywordExtraction() {
-  const { keywords } = useAppStore()
+  const keywords = dummyKeywords // 임시로 더미 데이터 사용
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">

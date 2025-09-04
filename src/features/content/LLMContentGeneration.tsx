@@ -1,8 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppStore } from "@/store/appStore"
+import { useState } from "react"
+
+// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+const dummyContentGeneration = {
+  selectedModel: 'OpenAI GPT-4',
+  progress: 75,
+  generatedCharacters: 2450,
+  generatedTags: 12,
+  logs: [
+    {
+      id: '1',
+      title: '블로그 글 작성 시작',
+      description: 'GPT-4로 콘텐츠 생성 중...',
+      timestamp: '08:04',
+    },
+    {
+      id: '2',
+      title: '제목 및 태그 생성 완료',
+      description: '12개 태그와 매력적인 제목 생성',
+      timestamp: '08:05',
+    },
+  ],
+}
 
 export default function LLMContentGeneration() {
-  const { contentGeneration, updateContentGeneration } = useAppStore()
+  // 지역 상태로 모델 선택 관리
+  const [selectedModel, setSelectedModel] = useState(dummyContentGeneration.selectedModel)
+  const contentGeneration = { ...dummyContentGeneration, selectedModel } // 임시로 더미 데이터 사용
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -20,7 +44,7 @@ export default function LLMContentGeneration() {
           <select 
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
             value={contentGeneration.selectedModel}
-            onChange={(e) => updateContentGeneration({ selectedModel: e.target.value as any })}
+            onChange={(e) => setSelectedModel(e.target.value)}
           >
             <option>OpenAI GPT-4</option>
             <option>Google Gemini</option>

@@ -1,9 +1,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useAppStore } from "@/store/appStore"
+import { useState } from "react"
+
+// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+const dummyPublishing = {
+  uploadStatus: 'completed' as 'connected' | 'uploading' | 'completed',
+  logs: [
+    {
+      id: '1',
+      title: '네이버 블로그 연결 성공',
+      description: '블로그 API 인증 완료',
+      status: 'connected' as 'connected' | 'uploading' | 'completed',
+    },
+    {
+      id: '2',
+      title: '자동 발행 완료',
+      description: '"겨울 패딩" 관련 글 발행 성공',
+      status: 'completed' as 'connected' | 'uploading' | 'completed',
+    },
+  ],
+}
 
 export default function PublishingManagement() {
-  const { publishing, updatePublishingData } = useAppStore()
+  // 지역 상태로 업로드 상태 관리
+  const [uploadStatus, setUploadStatus] = useState(dummyPublishing.uploadStatus)
+  const publishing = { ...dummyPublishing, uploadStatus } // 임시로 더미 데이터 사용
 
   const getStatusBadge = (status: 'connected' | 'uploading' | 'completed') => {
     switch (status) {
@@ -31,8 +52,10 @@ export default function PublishingManagement() {
   }
 
   const handleManualPublish = () => {
-    updatePublishingData({ uploadStatus: 'uploading' })
+    setUploadStatus('uploading')
     console.log('수동 발행 실행')
+    // 3초 후 완료 상태로 변경 (데모용)
+    setTimeout(() => setUploadStatus('completed'), 3000)
   }
 
   return (
