@@ -2,9 +2,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN yarn install --frozen-lockfile
 COPY . .
-RUN npm run build    # -> /app/dist
+RUN yarn build    # -> /app/dist
 
 # 2) Runtime stage (static file server)
 FROM node:20-alpine
