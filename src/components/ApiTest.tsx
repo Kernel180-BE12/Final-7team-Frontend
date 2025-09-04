@@ -1,35 +1,36 @@
 import { useState } from "react";
-import apiClient from "@/lib/api";
-import type { DashboardTestParams } from "@/lib/types";
+import { dashboardApi } from "@/lib/api";
+import { useUiStore } from "@/store/uiStore";
 
 export function ApiTest() {
+  // API 응답 데이터는 로컬 상태로 관리 (UI가 아닌 데이터)
   const [response, setResponse] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  
+  // UI 상태는 중앙 관리
+  const { 
+    isLoading, 
+    errors, 
+    setLoading, 
+    setError, 
+    clearError 
+  } = useUiStore();
 
   const testConnection = async () => {
-    setLoading(true);
-    setError("");
+    setLoading('apiTest', true);
+    clearError('apiTest');
     setResponse("");
 
     try {
-      const params: DashboardTestParams = {
-        role: "admin",
-        userName: "테스트 사용자",
-      };
-
-      const result = await apiClient.get<string>("/dashboard/test", {
-        params,
-      });
-      setResponse(result.data);
-      console.log("백엔드 응답:", result.data);
+      const result = await dashboardApi.testConnection("admin", "테스트 사용자");
+      setResponse(result);
+      console.log("백엔드 응답:", result);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "알 수 없는 오류";
-      setError(`연결 실패: ${errorMessage}`);
+      setError('apiTest', `연결 실패: ${errorMessage}`);
       console.error("API 에러:", err);
     } finally {
-      setLoading(false);
+      setLoading('apiTest', false);
     }
   };
 
@@ -39,10 +40,10 @@ export function ApiTest() {
 
       <button
         onClick={testConnection}
-        disabled={loading}
+        disabled={isLoading.apiTest}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
       >
-        {loading ? "테스트 중..." : "백엔드 연결 테스트"}
+        {isLoading.apiTest ? "테스트 중..." : "백엔드 연결 테스트"}
       </button>
 
       {response && (
@@ -52,10 +53,10 @@ export function ApiTest() {
         </div>
       )}
 
-      {error && (
+      {errors.apiTest && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
           <p className="text-red-800 font-semibold">❌ 연결 실패</p>
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-600">{errors.apiTest}</p>
         </div>
       )}
     </div>
