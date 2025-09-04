@@ -1,19 +1,79 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useAppStore } from "@/store/appStore"
+// UI 컴포넌트 및 타입 import
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/store/appStore";
+import { useUiStore } from "@/store/uiStore";
+import { scheduleApi } from "@/lib/api";
+import type { ExecutionCycle } from "@/lib/types";
+import { EXECUTION_CYCLE_OPTIONS } from "@/lib/types";
 
 export default function ScheduleManagement() {
-  const { schedule, updateScheduleSettings } = useAppStore()
+  // 앱 상태에서 스케줄 관련 데이터와 업데이트 함수 가져오기
+  const { schedule, updateScheduleSettings } = useAppStore();
+  
+  // UI 상태 관리 (로딩, 에러, 성공 메시지)
+  const { 
+    isLoading, 
+    errors, 
+    successMessages,
+    setLoading, 
+    setError, 
+    clearError, 
+    setSuccessMessage, 
+    clearSuccessMessage 
+  } = useUiStore();
 
-  const handleScheduleSubmit = () => {
-    // 스케줄 등록 로직
-    console.log('스케줄 등록:', schedule)
-  }
+  // 입력값 검증 함수
+  const validateForm = (): string | null => {
+    if (!schedule.executionTime) {
+      return "실행 시간을 설정해주세요.";
+    }
+    if (schedule.keywordCount <= 0 || schedule.keywordCount > 1000) {
+      return "키워드 추출 개수는 1~1000 사이여야 합니다.";
+    }
+    if (schedule.publishCount <= 0 || schedule.publishCount > 100) {
+      return "발행 개수는 1~100 사이여야 합니다.";
+    }
+    return null; // 검증 통과
+  };
+
+  // 스케줄 등록 버튼 클릭 핸들러
+  const handleScheduleSubmit = async () => {
+    try {
+      setLoading('schedule', true); // 제출 시작
+      clearError('schedule'); // 기존 에러 초기화
+      clearSuccessMessage('schedule'); // 기존 성공 메시지 초기화
+
+      // 입력값 검증
+      const validationError = validateForm();
+      if (validationError) {
+        setError('schedule', validationError);
+        return;
+      }
+
+      // API 호출로 스케줄 등록
+      const response = await scheduleApi.createSchedule(schedule);
+
+      if (response.success) {
+        setSuccessMessage('schedule', response.message || "스케줄이 성공적으로 등록되었습니다.");
+      } else {
+        setError('schedule', response.message || "스케줄 등록에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("스케줄 등록 에러:", error);
+      setError('schedule', "네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setLoading('schedule', false); // 제출 완료
+    }
+  };
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+      {" "}
+      {/* 호버 시 그림자 및 이동 효과가 있는 카드 */}
       <CardHeader>
         <CardTitle className="flex items-center">
+          {/* 스케줄 아이콘 */}
           <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-white text-xl mr-4">
             <div className="w-6 h-6 bg-white rounded opacity-80"></div>
           </div>
@@ -21,58 +81,102 @@ export default function ScheduleManagement() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {" "}
+        {/* 카드 내용 영역, 각 필드 간 간격 */}
+        {/* 실행 주기 선택 필드 */}
         <div>
-          <label className="block mb-2 font-semibold text-gray-800 text-sm">실행 주기</label>
-          <select 
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            실행 주기
+          </label>
+          <select
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
             value={schedule.executionCycle}
-            onChange={(e) => updateScheduleSettings({ executionCycle: e.target.value as any })}
+            onChange={(e) =>
+              updateScheduleSettings({
+                executionCycle: e.target.value as ExecutionCycle,
+              })
+            } // 실행 주기 변경 시 상태 업데이트
           >
-            <option>매일 실행</option>
-            <option>주간 실행</option>
-            <option>월간 실행</option>
+            {EXECUTION_CYCLE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
         </div>
-
+        {/* 실행 시간 설정 필드 */}
         <div>
-          <label className="block mb-2 font-semibold text-gray-800 text-sm">실행 시간</label>
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            실행 시간
+          </label>
           <input
             type="time"
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
             value={schedule.executionTime}
-            onChange={(e) => updateScheduleSettings({ executionTime: e.target.value })}
+            onChange={(e) =>
+              updateScheduleSettings({ executionTime: e.target.value })
+            } // 실행 시간 변경 시 상태 업데이트
           />
         </div>
-
+        {/* 키워드 추출 개수 설정 필드 */}
         <div>
-          <label className="block mb-2 font-semibold text-gray-800 text-sm">키워드 추출 개수</label>
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            키워드 추출 개수
+          </label>
           <input
             type="number"
+            min="1"
+            max="1000"
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
             value={schedule.keywordCount}
-            onChange={(e) => updateScheduleSettings({ keywordCount: parseInt(e.target.value) })}
-            placeholder="트렌드 키워드 개수"
+            onChange={(e) =>
+              updateScheduleSettings({
+                keywordCount: parseInt(e.target.value) || 0,
+              })
+            } // 숫자로 변환하여 상태 업데이트 (빈 값일 때 0)
+            placeholder="트렌드 키워드 개수 (1-1000)"
           />
         </div>
-
+        {/* 발행 개수 설정 필드 */}
         <div>
-          <label className="block mb-2 font-semibold text-gray-800 text-sm">발행 개수</label>
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            발행 개수
+          </label>
           <input
             type="number"
+            min="1"
+            max="100"
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
             value={schedule.publishCount}
-            onChange={(e) => updateScheduleSettings({ publishCount: parseInt(e.target.value) })}
-            placeholder="생성할 콘텐츠 수"
+            onChange={(e) =>
+              updateScheduleSettings({
+                publishCount: parseInt(e.target.value) || 0,
+              })
+            } // 숫자로 변환하여 상태 업데이트 (빈 값일 때 0)
+            placeholder="생성할 콘텐츠 수 (1-100)"
           />
         </div>
-
-        <Button 
-          className="w-full bg-gray-700 text-white hover:bg-gray-600"
-          onClick={handleScheduleSubmit}
+        {/* 메시지 표시 영역 */}
+        {successMessages.schedule && (
+          <div className="p-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
+            {successMessages.schedule}
+          </div>
+        )}
+        
+        {errors.schedule && (
+          <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+            {errors.schedule}
+          </div>
+        )}
+        {/* 스케줄 등록 버튼 */}
+        <Button
+          className="w-full bg-gray-700 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleScheduleSubmit} // 등록 버튼 클릭 시 핸들러 호출
+          disabled={isLoading.schedule} // 제출 중일 때 버튼 비활성화
         >
-          스케줄 등록
+          {isLoading.schedule ? "등록 중..." : "스케줄 등록"}
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }
