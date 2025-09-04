@@ -1,6 +1,6 @@
 services:
   front:
-    container_name: front-dev
+    container_name: front
     build:
       context: .
       dockerfile: Dockerfile
