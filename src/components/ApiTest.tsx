@@ -5,32 +5,26 @@ import { useUiStore } from "@/store/uiStore";
 export function ApiTest() {
   // API 응답 데이터는 로컬 상태로 관리 (UI가 아닌 데이터)
   const [response, setResponse] = useState<string>("");
-  
+
   // UI 상태는 중앙 관리
-  const { 
-    isLoading, 
-    errors, 
-    setLoading, 
-    setError, 
-    clearError 
-  } = useUiStore();
+  const { isLoading, errors, setLoading, setError, clearError } = useUiStore();
 
   const testConnection = async () => {
-    setLoading('apiTest', true);
-    clearError('apiTest');
+    setLoading("apiTest", true);
+    clearError("apiTest");
     setResponse("");
 
     try {
-      const result = await dashboardApi.testConnection("admin", "테스트 사용자");
+      const result = await dashboardApi.testConnection("admin", "ronlee");
       setResponse(result);
       console.log("백엔드 응답:", result);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "알 수 없는 오류";
-      setError('apiTest', `연결 실패: ${errorMessage}`);
+      setError("apiTest", `연결 실패: ${errorMessage}`);
       console.error("API 에러:", err);
     } finally {
-      setLoading('apiTest', false);
+      setLoading("apiTest", false);
     }
   };
 
