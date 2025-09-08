@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Using registry: $REG"
-          docker build -t "$REG/$REPO:$TAG" ./frontend
+          docker build -t "$REG/$REPO:$TAG" .
           docker push  "$REG/$REPO:$TAG"
           docker tag   "$REG/$REPO:$TAG" "$REG/$REPO:latest"
           docker push  "$REG/$REPO:latest"
