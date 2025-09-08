@@ -9,8 +9,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   // 개발 중 임시 우회 (나중에 제거)
   const isDevelopment = import.meta.env.DEV;
+  const isDevServer = window.location.hostname === '13.124.8.131';
+  const shouldBypass = isDevelopment || isDevServer;
   
-  if (!isAuthenticated && !isDevelopment) {
+  if (!isAuthenticated && !shouldBypass) {
     return <Navigate to="/login" replace />;
   }
   
