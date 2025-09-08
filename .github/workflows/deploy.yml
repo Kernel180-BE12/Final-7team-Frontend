@@ -8,9 +8,9 @@ on:
 
 env:
   REGION: ap-northeast-2
-  REGISTRY: ${{ secrets.ECR_REGISTRY }} # 예) 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
-  REPO: final-7team-front-react        # ECR 리포 이름
-  TAG: ${{ github.sha }}               # SHA 태그도 함께 푸시(옵션)
+  REPO: final-7team-react
+  TAG: ${{ github.sha }}
+
 
 jobs:
   build-and-push:
@@ -19,25 +19,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # AWS & ECR 로그인
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Login to Amazon ECR
+      # AWS & ECR 로그인
+        id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Docker 이미지 빌드 & 푸시
-      # (Dockerfile은 레포 루트에 있다고 가정. 위치 다르면 -f ./경로/Dockerfile 지정)
       - name: Build & Push (SHA + latest)
+        env:
+          REG:  ${{ steps.ecr.outputs.registry }}   # ← 안전한 레지스트리 값
+          REPO: ${{ env.REPO }}
+          TAG:  ${{ env.TAG }}
         run: |
-          docker build -t "$REGISTRY/$REPO:${TAG}" .
-          docker push  "$REGISTRY/$REPO:${TAG}"
-          docker tag   "$REGISTRY/$REPO:${TAG}" "$REGISTRY/$REPO:latest"
-          docker push  "$REGISTRY/$REPO:latest"
+          set -euo pipefail
+          echo "Using registry: $REG"
+          docker build -t "$REG/$REPO:$TAG" .
+          docker push  "$REG/$REPO:$TAG"
+          docker tag   "$REG/$REPO:$TAG" "$REG/$REPO:latest"
+          docker push  "$REG/$REPO:latest"
 
   deploy:
     needs: build-and-push
@@ -52,12 +50,18 @@ jobs:
           key:      ${{ secrets.EC2_KEY }}
           script: |
             set -euo pipefail
-            cd /home/ec2-user/softlabs   # <- 경로 주의: ec2-user (uesr 아님)
+
+            cd /home/ec2-user/softlabs
             test -f compose.yml || test -f docker-compose.yml
 
-            # EC2 인스턴스 프로필(IAM Role) 있는 상태 가정
-            aws ecr get-login-password --region "${{ env.REGION }}" \
-              | docker login --username AWS --password-stdin "${{ env.REGISTRY }}"
+            REGION="${{ env.REGION }}"
+            # EC2의 IAM Role로 계정 ID 조회 → 레지스트리 도메인 생성
+            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+            REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+
+            aws ecr get-login-password --region "$REGION" \
+              | docker login --username AWS --password-stdin "$REGISTRY"
+
 
             docker compose pull front-react
             docker compose up -d --no-deps front-react
