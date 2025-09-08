@@ -23,6 +23,9 @@ jobs:
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: ${{ env.REGION }}
+
 
       # 3. Docker 이미지 빌드 & 푸시
       - name: Build & Push (SHA + latest)
