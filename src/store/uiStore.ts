@@ -7,6 +7,11 @@ interface UiState {
     sidebar: boolean
     schedule: boolean
     apiTest: boolean
+    login: boolean
+    register: boolean
+    pipeline: boolean
+    pipelineHistory: boolean
+    pipelineResult: boolean
   }
   
   // 에러 상태 관리
@@ -14,12 +19,20 @@ interface UiState {
     sidebar: string
     schedule: string
     apiTest: string
+    login: string
+    register: string
+    pipeline: string
+    pipelineHistory: string
+    pipelineResult: string
   }
   
   // 성공 메시지
   successMessages: {
     schedule: string
     apiTest: string
+    login: string
+    register: string
+    pipeline: string
   }
   
   // 액션들
@@ -38,15 +51,28 @@ const initialState = {
     sidebar: false,
     schedule: false,
     apiTest: false,
+    login: false,
+    register: false,
+    pipeline: false,
+    pipelineHistory: false,
+    pipelineResult: false,
   },
   errors: {
     sidebar: '',
     schedule: '',
     apiTest: '',
+    login: '',
+    register: '',
+    pipeline: '',
+    pipelineHistory: '',
+    pipelineResult: '',
   },
   successMessages: {
     schedule: '',
     apiTest: '',
+    login: '',
+    register: '',
+    pipeline: '',
   },
 }
 

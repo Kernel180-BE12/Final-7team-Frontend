@@ -1,8 +1,8 @@
-import { AdminDashboard } from './features/dashboard'
+import AppRouter from './router/AppRouter'
 
 function App() {
   try {
-    return <AdminDashboard />
+    return <AppRouter />
   } catch (error) {
     return (
       <div style={{ padding: '20px', background: 'red', color: 'white' }}>

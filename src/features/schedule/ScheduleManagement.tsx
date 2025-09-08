@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
 import { useUiStore } from "@/store/uiStore";
-import { scheduleApi } from "@/lib/api";
+import { usePipelineStore } from "@/store/pipelineStore";
+import { scheduleApi, pipelineApi } from "@/lib/api";
 import type { ExecutionCycle } from "@/lib/types";
 import { EXECUTION_CYCLE_OPTIONS } from "@/lib/types";
 
@@ -22,6 +23,9 @@ export default function ScheduleManagement() {
     setSuccessMessage, 
     clearSuccessMessage 
   } = useUiStore();
+
+  // 파이프라인 상태 관리
+  const { setActiveExecution } = usePipelineStore();
 
   // 입력값 검증 함수
   const validateForm = (): string | null => {
@@ -64,6 +68,55 @@ export default function ScheduleManagement() {
       setError('schedule', "네트워크 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setLoading('schedule', false); // 제출 완료
+    }
+  };
+
+  // 파이프라인 즉시 실행 핸들러
+  const handleImmediateExecution = async () => {
+    try {
+      setLoading('pipeline', true);
+      clearError('pipeline');
+      clearSuccessMessage('pipeline');
+
+      // 입력값 검증 - 즉시 실행을 위한 기본값 설정
+      const validationError = validateForm();
+      if (validationError) {
+        setError('schedule', validationError);
+        return;
+      }
+
+      // 파이프라인 실행 요청
+      const executeResponse = await pipelineApi.execute({
+        keywordCount: schedule.keywordCount,
+        publishCount: schedule.publishCount,
+        executeImmediately: true
+      });
+
+      if (executeResponse.success && executeResponse.data) {
+        // 실행된 파이프라인을 활성 실행 목록에 추가
+        setActiveExecution(executeResponse.data.executionId, {
+          executionId: executeResponse.data.executionId,
+          overallStatus: "running",
+          currentStage: "키워드 추출",
+          progress: {
+            keyword_extraction: { status: "running", progress: 0 },
+            product_crawling: { status: "pending", progress: 0 },
+            content_generation: { status: "pending", progress: 0 },
+            content_publishing: { status: "pending", progress: 0 }
+          },
+          startedAt: new Date().toISOString(),
+          logs: []
+        });
+
+        setSuccessMessage('pipeline', `파이프라인 실행이 시작되었습니다. (실행 ID: ${executeResponse.data.executionId})`);
+      } else {
+        setError('pipeline', executeResponse.message || "파이프라인 실행에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("파이프라인 즉시 실행 에러:", error);
+      setError('pipeline', "네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setLoading('pipeline', false);
     }
   };
 
@@ -163,19 +216,56 @@ export default function ScheduleManagement() {
           </div>
         )}
         
+        {successMessages.pipeline && (
+          <div className="p-3 rounded-lg text-sm bg-blue-50 text-blue-700 border border-blue-200">
+            {successMessages.pipeline}
+          </div>
+        )}
+        
         {errors.schedule && (
           <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
             {errors.schedule}
           </div>
         )}
-        {/* 스케줄 등록 버튼 */}
-        <Button
-          className="w-full bg-gray-700 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleScheduleSubmit} // 등록 버튼 클릭 시 핸들러 호출
-          disabled={isLoading.schedule} // 제출 중일 때 버튼 비활성화
-        >
-          {isLoading.schedule ? "등록 중..." : "스케줄 등록"}
-        </Button>
+
+        {errors.pipeline && (
+          <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+            {errors.pipeline}
+          </div>
+        )}
+        
+        {/* 버튼 그룹 */}
+        <div className="space-y-3">
+          {/* 즉시 실행 버튼 */}
+          <Button
+            className="w-full bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleImmediateExecution}
+            disabled={isLoading.pipeline || isLoading.schedule}
+          >
+            {isLoading.pipeline ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                실행 중...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                즉시 실행
+              </div>
+            )}
+          </Button>
+          
+          {/* 스케줄 등록 버튼 */}
+          <Button
+            className="w-full bg-gray-700 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleScheduleSubmit} // 등록 버튼 클릭 시 핸들러 호출
+            disabled={isLoading.schedule} // 제출 중일 때 버튼 비활성화
+          >
+            {isLoading.schedule ? "등록 중..." : "스케줄 등록"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

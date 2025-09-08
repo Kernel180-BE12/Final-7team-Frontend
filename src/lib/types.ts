@@ -60,4 +60,234 @@ export interface ScheduleResponse {
   scheduleId?: number;
 }
 
+// Auth Types
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    token?: string;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      role: string;
+    };
+  };
+}
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
+// Pipeline Types
+export interface PipelineConfig {
+  keywordCount: number;
+  publishCount: number;
+  contentType: "blog" | "review" | "description";
+  platforms: Array<"naver" | "coupang" | "11st" | "gmarket">;
+  publishTargets: Array<"blog" | "social" | "website">;
+}
+
+export interface PipelineExecuteRequest {
+  keywordCount: number;
+  publishCount: number;
+  executeImmediately?: boolean;
+}
+
+export interface PipelineExecuteResponse {
+  success: boolean;
+  message: string;
+  data: {
+    executionId: number;
+    status: "started";
+    estimatedDuration: string;
+    stages: string[];
+  };
+}
+
+// 각 단계별 결과 타입들
+export interface KeywordExtractionResult {
+  keywords: Array<{
+    keyword: string;
+    relevanceScore: number;
+    category: string;
+  }>;
+  totalCount: number;
+}
+
+export interface ProductCrawlingResult {
+  products: Array<{
+    title: string;
+    price: number;
+    platform: string;
+    productUrl: string;
+  }>;
+  totalCount: number;
+}
+
+export interface ContentGenerationResult {
+  contents: Array<{
+    title: string;
+    contentType: string;
+    wordCount: number;
+    contentPreview: string;
+  }>;
+  totalCount: number;
+}
+
+export interface ContentPublishingResult {
+  publications: Array<{
+    platform: string;
+    publishedUrl: string;
+    status: "published" | "failed";
+  }>;
+  successCount: number;
+  failedCount: number;
+}
+
+// 단계별 결과 타입 유니온
+export type StageResult = 
+  | KeywordExtractionResult 
+  | ProductCrawlingResult 
+  | ContentGenerationResult 
+  | ContentPublishingResult;
+
+export interface PipelineStageProgress {
+  status: "completed" | "running" | "pending" | "failed";
+  progress: number;
+  result?: StageResult;
+}
+
+export interface PipelineStatusResponse {
+  success: boolean;
+  data: {
+    executionId: number;
+    overallStatus: "running" | "completed" | "failed" | "paused";
+    startedAt: string;
+    completedAt?: string;
+    currentStage: string;
+    progress: {
+      keyword_extraction: PipelineStageProgress;
+      product_crawling: PipelineStageProgress;
+      content_generation: PipelineStageProgress;
+      content_publishing: PipelineStageProgress;
+    };
+    logs: Array<{
+      timestamp: string;
+      stage: string;
+      level: "info" | "warning" | "error";
+      message: string;
+    }>;
+  };
+}
+
+export interface PipelineControlRequest {
+  action: "pause" | "resume" | "cancel";
+  reason?: string;
+}
+
+export interface PipelineControlResponse {
+  success: boolean;
+  message: string;
+  data: {
+    executionId: number;
+    newStatus: string;
+    timestamp: string;
+  };
+}
+
+export interface PipelineHistoryItem {
+  executionId: number;
+  scheduleId: number;
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+  duration?: string;
+  results: {
+    keywordsExtracted: number;
+    productsCrawled: number;
+    contentsGenerated: number;
+    contentsPublished: number;
+  };
+}
+
+export interface PipelineHistoryResponse {
+  success: boolean;
+  data: {
+    executions: PipelineHistoryItem[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+    };
+  };
+}
+
+export interface PipelineResultResponse {
+  success: boolean;
+  data: {
+    executionId: number;
+    summary: {
+      totalDuration: string;
+      successRate: number;
+      keywordsExtracted: number;
+      productsCrawled: number;
+      contentsGenerated: number;
+      contentsPublished: number;
+    };
+    stageResults: {
+      keyword_extraction: {
+        keywords: Array<{
+          keyword: string;
+          relevanceScore: number;
+          category: string;
+        }>;
+      };
+      product_crawling: {
+        products: Array<{
+          title: string;
+          price: number;
+          platform: string;
+          productUrl: string;
+        }>;
+      };
+      content_generation: {
+        contents: Array<{
+          title: string;
+          contentType: string;
+          wordCount: number;
+          contentPreview: string;
+        }>;
+      };
+      content_publishing: {
+        publications: Array<{
+          platform: string;
+          publishedUrl: string;
+          status: "published" | "failed";
+        }>;
+      };
+    };
+    errors: Array<{
+      stage: string;
+      error: string;
+      timestamp: string;
+    }>;
+  };
+}
+
 // 추후 다른 API 타입들도 여기에 추가
