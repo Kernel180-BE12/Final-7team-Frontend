@@ -1,0 +1,68 @@
+name: Frontend (React) CI/CD to AWS ECR
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ dev ]
+
+env:
+  REGION: ap-northeast-2
+  REPO: final-7team-react
+  TAG: ${{ github.sha }}
+
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      # AWS & ECR 로그인
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push (SHA + latest)
+        env:
+          REG:  ${{ steps.ecr.outputs.registry }}   # ← 안전한 레지스트리 값
+          REPO: ${{ env.REPO }}
+          TAG:  ${{ env.TAG }}
+        run: |
+          set -euo pipefail
+          echo "Using registry: $REG"
+          docker build -t "$REG/$REPO:$TAG" .
+          docker push  "$REG/$REPO:$TAG"
+          docker tag   "$REG/$REPO:$TAG" "$REG/$REPO:latest"
+          docker push  "$REG/$REPO:latest"
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'   # main에만 배포
+    steps:
+      - name: SSH deploy (front-react만 교체)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}   # 보통 ec2-user
+          key:      ${{ secrets.EC2_KEY }}
+          script: |
+            set -euo pipefail
+
+            cd /home/ec2-user/softlabs
+            test -f compose.yml || test -f docker-compose.yml
+
+            REGION="${{ env.REGION }}"
+            # EC2의 IAM Role로 계정 ID 조회 → 레지스트리 도메인 생성
+            ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+            REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+
+            aws ecr get-login-password --region "$REGION" \
+              | docker login --username AWS --password-stdin "$REGISTRY"
+
+
+            docker compose pull front-react
+            docker compose up -d --no-deps front-react
+            docker image prune -f
