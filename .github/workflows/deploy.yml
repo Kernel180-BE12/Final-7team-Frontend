@@ -1,0 +1,86 @@
+name: Frontend CI/CD to AWS ECR
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Node.js 20 설치 (React 빌드용)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3. 의존성 설치 & 빌드
+      - name: Install dependencies & Build React
+        run: |
+          npm ci
+          npm run build
+        working-directory: frontend
+
+  build-and-push-frontend:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. AWS 자격 증명 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3. ECR 로그인
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # 4. 변경된 디렉토리 감지 (frontend만)
+      - name: Detect changed directories
+        id: changes
+        run: |
+          BASE_SHA=${{ github.event.before || github.event.pull_request.base.sha || 'HEAD^' }}
+          echo "frontend=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '^frontend/' || true)" >> $GITHUB_ENV
+
+      # 5. React 이미지 빌드 & 푸시
+      - name: Build & Push React
+        if: env.frontend != ''
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/final-7team-react:latest ./frontend
+          docker push ${{ secrets.ECR_REGISTRY }}/final-7team-react:latest
+
+  deploy-to-ec2:
+    needs: build-and-push-frontend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && env.frontend != ''
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ec2-user/softlabs
+            docker-compose pull react
+            docker-compose up -d react
+            docker image prune -f
