@@ -1,86 +1,64 @@
-name: Frontend CI/CD to AWS ECR
+name: Frontend (React) CI/CD to AWS ECR
 
 on:
   push:
-    branches:
-      - main
-      - dev
+    branches: [ main, dev ]
   pull_request:
-    branches:
-      - dev
+    branches: [ dev ]
+
+env:
+  REGION: ap-northeast-2
+  REGISTRY: ${{ secrets.ECR_REGISTRY }} # 예) 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
+  REPO: final-7team-front-react        # ECR 리포 이름
+  TAG: ${{ github.sha }}               # SHA 태그도 함께 푸시(옵션)
 
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. 코드 체크아웃
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # 2. Node.js 20 설치 (React 빌드용)
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      # AWS & ECR 로그인
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: 20
-
-      # 3. 의존성 설치 & 빌드
-      - name: Install dependencies & Build React
-        run: |
-          npm ci
-          npm run build
-        working-directory: frontend
-
-  build-and-push-frontend:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      # 1. 코드 체크아웃
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 2. AWS 자격 증명 설정
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
+          aws-region: ${{ env.REGION }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2
 
-      # 3. ECR 로그인
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
-      # 4. 변경된 디렉토리 감지 (frontend만)
-      - name: Detect changed directories
-        id: changes
+      # Docker 이미지 빌드 & 푸시
+      # (Dockerfile은 레포 루트에 있다고 가정. 위치 다르면 -f ./경로/Dockerfile 지정)
+      - name: Build & Push (SHA + latest)
         run: |
-          BASE_SHA=${{ github.event.before || github.event.pull_request.base.sha || 'HEAD^' }}
-          echo "frontend=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '^frontend/' || true)" >> $GITHUB_ENV
+          docker build -t "$REGISTRY/$REPO:${TAG}" .
+          docker push  "$REGISTRY/$REPO:${TAG}"
+          docker tag   "$REGISTRY/$REPO:${TAG}" "$REGISTRY/$REPO:latest"
+          docker push  "$REGISTRY/$REPO:latest"
 
-      # 5. React 이미지 빌드 & 푸시
-      - name: Build & Push React
-        if: env.frontend != ''
-        run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/final-7team-react:latest ./frontend
-          docker push ${{ secrets.ECR_REGISTRY }}/final-7team-react:latest
-
-  deploy-to-ec2:
-    needs: build-and-push-frontend
+  deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && env.frontend != ''
-
+    if: github.ref == 'refs/heads/main'   # main에만 배포
     steps:
-      - name: Deploy to EC2
+      - name: SSH deploy (front-react만 교체)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          host:     ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}   # 보통 ec2-user
+          key:      ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ec2-user/softlabs
-            docker-compose pull react
-            docker-compose up -d react
+            set -euo pipefail
+            cd /home/ec2-user/softlabs   # <- 경로 주의: ec2-user (uesr 아님)
+            test -f compose.yml || test -f docker-compose.yml
+
+            # EC2 인스턴스 프로필(IAM Role) 있는 상태 가정
+            aws ecr get-login-password --region "${{ env.REGION }}" \
+              | docker login --username AWS --password-stdin "${{ env.REGISTRY }}"
+
+            docker compose pull front-react
+            docker compose up -d --no-deps front-react
             docker image prune -f
