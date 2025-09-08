@@ -11,28 +11,39 @@ env:
   REPO: final-7team-react
   TAG: ${{ github.sha }}
 
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      # 1. 코드 체크아웃
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. AWS 자격 증명 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
 
-      # AWS & ECR 로그인
+      # 3. AWS ECR 로그인
+      - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          region: ${{ env.REGION }}
 
+      # 4. Docker 이미지 빌드 & 푸시
       - name: Build & Push (SHA + latest)
         env:
-          REG:  ${{ steps.ecr.outputs.registry }}   # ← 안전한 레지스트리 값
+          REG:  ${{ steps.ecr.outputs.registry }}
           REPO: ${{ env.REPO }}
           TAG:  ${{ env.TAG }}
         run: |
           set -euo pipefail
           echo "Using registry: $REG"
-          docker build -t "$REG/$REPO:$TAG" .
+          docker build -t "$REG/$REPO:$TAG" ./frontend
           docker push  "$REG/$REPO:$TAG"
           docker tag   "$REG/$REPO:$TAG" "$REG/$REPO:latest"
           docker push  "$REG/$REPO:latest"
@@ -40,29 +51,23 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'   # main에만 배포
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: SSH deploy (front-react만 교체)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}   # 보통 ec2-user
+          username: ${{ secrets.EC2_USER }}
           key:      ${{ secrets.EC2_KEY }}
           script: |
             set -euo pipefail
-
             cd /home/ec2-user/softlabs
             test -f compose.yml || test -f docker-compose.yml
-
             REGION="${{ env.REGION }}"
-            # EC2의 IAM Role로 계정 ID 조회 → 레지스트리 도메인 생성
             ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
             REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
-
             aws ecr get-login-password --region "$REGION" \
               | docker login --username AWS --password-stdin "$REGISTRY"
-
-
             docker compose pull front-react
             docker compose up -d --no-deps front-react
             docker image prune -f
