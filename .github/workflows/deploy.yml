@@ -8,7 +8,7 @@ on:
 
 env:
   REGION: ap-northeast-2
-  REPO: final-7team-front-react
+  REPO: final-7team-react
   TAG: ${{ github.sha }}
 
 jobs:
