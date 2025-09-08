@@ -7,6 +7,7 @@ import { ProductSearchCrawling } from "../product";
 import { LLMContentGeneration } from "../content";
 import { PublishingManagement } from "../publishing";
 import { ResultMonitoring } from "../monitoring";
+import { PipelineStatus } from "../pipeline";
 import { ApiTest } from "@/components/ApiTest";
 
 export default function AdminDashboard() {
@@ -31,15 +32,22 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: "#FEFEFE" }}> {/* 전체 레이아웃 컨테이너 */}
-      <div className="flex min-h-screen"> {/* 사이드바와 메인 콘텐츠를 나란히 배치 */}
+    <div className="min-h-screen" style={{ background: "#FEFEFE" }}>
+      {" "}
+      {/* 전체 레이아웃 컨테이너 */}
+      <div className="flex min-h-screen">
+        {" "}
+        {/* 사이드바와 메인 콘텐츠를 나란히 배치 */}
         {/* 사이드바 네비게이션 컴포넌트 */}
         <Sidebar />
-
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-8 overflow-y-auto"> {/* 메인 콘텐츠 영역 */}
+        <main className="flex-1 p-8 overflow-y-auto">
+          {" "}
+          {/* 메인 콘텐츠 영역 */}
           {/* 헤더 */}
-          <div className="bg-white rounded-2xl p-8 mb-8 shadow-lg border border-gray-200"> {/* 대시보드 헤더 */}
+          <div className="bg-white rounded-2xl p-8 mb-8 shadow-lg border border-gray-200">
+            {" "}
+            {/* 대시보드 헤더 */}
             <h2 className="text-gray-800 text-3xl font-bold mb-2">
               AI 콘텐츠 자동화 시스템 대시보드
             </h2>
@@ -47,60 +55,75 @@ export default function AdminDashboard() {
               ssadagu.kr 상품 기반 네이버 블로그 자동 발행 시스템
             </p>
           </div>
-
           {/* 백엔드 연결 테스트 */}
-          <div className="mb-8"> {/* API 연결 테스트 섹션 */}
+          <div className="mb-8">
+            {" "}
+            {/* API 연결 테스트 섹션 */}
             <ApiTest />
           </div>
-
           {/* 선택된 메뉴에 따른 콘텐츠 표시 */}
           {activeNav === "대시보드" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"> {/* 대시보드 기능 카드들 그리드 */}
-              <ScheduleManagement />
-              <KeywordExtraction />
-              <ProductSearchCrawling />
-              <LLMContentGeneration />
-              <PublishingManagement />
-              <ResultMonitoring />
-            </div>
+            <>
+              {/* 파이프라인 실행 상태 (전체 너비) */}
+              <div className="mb-8">
+                <PipelineStatus />
+              </div>
+
+              {/* 기능 카드들 그리드 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <ScheduleManagement />
+                <KeywordExtraction />
+                <ProductSearchCrawling />
+                <LLMContentGeneration />
+                <PublishingManagement />
+                <ResultMonitoring />
+              </div>
+            </>
           )}
-          
           {activeNav === "스케줄 관리" && (
-            <div className="max-w-2xl mx-auto"> {/* 스케줄 관리 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* 스케줄 관리 단독 표시 */}
               <ScheduleManagement />
             </div>
           )}
-          
           {activeNav === "키워드 추출" && (
-            <div className="max-w-2xl mx-auto"> {/* 키워드 추출 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* 키워드 추출 단독 표시 */}
               <KeywordExtraction />
             </div>
           )}
-          
           {activeNav === "상품 검색" && (
-            <div className="max-w-2xl mx-auto"> {/* 상품 검색 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* 상품 검색 단독 표시 */}
               <ProductSearchCrawling />
             </div>
           )}
-          
           {activeNav === "LLM 콘텐츠" && (
-            <div className="max-w-2xl mx-auto"> {/* LLM 콘텐츠 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* LLM 콘텐츠 단독 표시 */}
               <LLMContentGeneration />
             </div>
           )}
-          
           {activeNav === "발행 관리" && (
-            <div className="max-w-2xl mx-auto"> {/* 발행 관리 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* 발행 관리 단독 표시 */}
               <PublishingManagement />
             </div>
           )}
-          
           {activeNav === "결과 모니터링" && (
-            <div className="max-w-2xl mx-auto"> {/* 결과 모니터링 단독 표시 */}
+            <div className="max-w-2xl mx-auto">
+              {" "}
+              {/* 결과 모니터링 단독 표시 */}
               <ResultMonitoring />
             </div>
           )}
         </main>
+        {/* 추가적인 사이드바나 정보 패널이 필요하면 여기에 추가 */}
       </div>
     </div>
   );

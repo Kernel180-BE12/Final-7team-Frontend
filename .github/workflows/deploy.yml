@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Using registry: $REG"
-          docker build -t "$REG/$REPO:$TAG" .
+          docker build -f ./Dockerfile -t "$REG/$REPO:$TAG" .   # Dockerfile 경로 명시
           docker push  "$REG/$REPO:$TAG"
           docker tag   "$REG/$REPO:$TAG" "$REG/$REPO:latest"
           docker push  "$REG/$REPO:latest"
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: SSH deploy (front-react만 교체)
+      - name: SSH deploy (react 서비스 교체)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.EC2_HOST }}
@@ -68,6 +68,6 @@ jobs:
             REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
             aws ecr get-login-password --region "$REGION" \
               | docker login --username AWS --password-stdin "$REGISTRY"
-            docker-compose pull front-react
-            docker-compose up -d --no-deps front-react
+            docker-compose pull react
+            docker-compose up -d --no-deps react
             docker image prune -f
