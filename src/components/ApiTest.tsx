@@ -43,7 +43,9 @@ export function ApiTest() {
       {response && (
         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
           <p className="text-green-800 font-semibold">✅ 연결 성공!</p>
-          <p className="text-sm text-green-600">백엔드 응답: {response}</p>
+          <p className="text-sm text-green-600">
+            백엔드 응답: {response.replace(/<[^>]*>/g, "")}
+          </p>
         </div>
       )}
 
