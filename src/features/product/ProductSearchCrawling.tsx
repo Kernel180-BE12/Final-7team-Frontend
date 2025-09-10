@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePipelineData } from "../pipeline/PipelineStatus"
 
 // 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
 const dummyProductSearch = {
@@ -22,7 +23,34 @@ const dummyProductSearch = {
 }
 
 export default function ProductSearchCrawling() {
-  const productSearch = dummyProductSearch // 임시로 더미 데이터 사용
+  // 파이프라인 데이터 가져오기
+  const pipelineData = usePipelineData()
+  
+  // 파이프라인에서 상품 크롤링 데이터가 있으면 사용, 없으면 더미 데이터 사용
+  const productResults = Array.isArray(pipelineData.stageResults.productCrawling) 
+    ? pipelineData.stageResults.productCrawling 
+    : []
+  const productProgress = pipelineData.progress.product_crawling || { status: 'pending', progress: 0 }
+  
+  const productSearch = productResults.length > 0 ? {
+    status: productProgress.status as 'searching' | 'crawling' | 'completed',
+    targetSite: 'ssadagu.kr',
+    progress: productProgress.progress,
+    logs: [
+      {
+        id: '1',
+        title: `상품 검색 ${productProgress.status === 'completed' ? '완료' : productProgress.status === 'running' ? '진행 중' : '대기 중'}`,
+        description: `총 ${productResults.length}개 상품 검색됨`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      },
+      ...(productProgress.status === 'completed' && productResults.length > 0 ? [{
+        id: '2',
+        title: '상품 정보 크롤링 완료',
+        description: `${productResults.length}개 상품 크롤링 완료`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }] : [])
+    ],
+  } : dummyProductSearch
 
   const getStatusMessage = () => {
     switch (productSearch.status) {

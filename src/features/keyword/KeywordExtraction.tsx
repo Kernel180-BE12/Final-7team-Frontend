@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePipelineData } from "../pipeline/PipelineStatus"
 
-// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
+// 임시 더미 데이터 (파이프라인 데이터가 없을 때 사용)
 const dummyKeywords = {
   collectedKeywords: 50,
   selectedKeywords: 1,
@@ -23,7 +24,35 @@ const dummyKeywords = {
 }
 
 export default function KeywordExtraction() {
-  const keywords = dummyKeywords // 임시로 더미 데이터 사용
+  // 파이프라인 데이터 가져오기
+  const pipelineData = usePipelineData()
+  
+  // 파이프라인에서 키워드 데이터가 있으면 사용, 없으면 더미 데이터 사용
+  const keywordResults = Array.isArray(pipelineData.stageResults.keywordExtraction) 
+    ? pipelineData.stageResults.keywordExtraction 
+    : []
+  const keywordProgress = pipelineData.progress.keyword_extraction || { status: 'pending', progress: 0 }
+  
+  const keywords = keywordResults.length > 0 ? {
+    collectedKeywords: keywordResults.length,
+    selectedKeywords: keywordResults.filter((k: any) => k && k.selected).length || 1,
+    selectedKeyword: keywordResults.find((k: any) => k && k.selected)?.keyword || keywordResults[0]?.keyword || '키워드 없음',
+    keywords: keywordResults.map((k: any) => k && k.keyword).filter(Boolean) || [],
+    logs: [
+      {
+        id: '1',
+        title: `키워드 수집 ${keywordProgress.status === 'completed' ? '완료' : keywordProgress.status === 'running' ? '진행 중' : '대기 중'}`,
+        description: `${keywordResults.length}개 키워드 추출 ${keywordProgress.status === 'completed' ? '성공' : ''}`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      },
+      ...(keywordProgress.status === 'completed' && keywordResults.length > 0 ? [{
+        id: '2',
+        title: `선택된 키워드: "${keywordResults.find((k: any) => k.selected)?.keyword || keywordResults[0]?.keyword}"`,
+        description: '우선순위 1위 키워드 자동 선택',
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }] : [])
+    ],
+  } : dummyKeywords
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -47,6 +76,22 @@ export default function KeywordExtraction() {
             </div>
           ))}
         </div>
+
+        {/* 진행률 표시 */}
+        {pipelineData.isRunning && keywordProgress.status === 'running' && (
+          <div className="mt-4">
+            <div className="flex justify-between text-sm mb-1">
+              <span>키워드 추출 진행률</span>
+              <span>{keywordProgress.progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${keywordProgress.progress}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-between mt-4">
           <div className="text-center">
