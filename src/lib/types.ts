@@ -187,6 +187,18 @@ export interface PipelineStatusResponse {
       content_generation: PipelineStageProgress;
       content_publishing: PipelineStageProgress;
     };
+    stageResults?: {
+      keywordExtraction: any[];
+      productCrawling: any[];
+      contentGeneration: any;
+      contentPublishing: any;
+    };
+    results?: {
+      keywords?: any[];
+      products?: any[];
+      content?: any;
+      publishingStatus?: any;
+    };
     logs: Array<{
       timestamp: string;
       stage: string;
