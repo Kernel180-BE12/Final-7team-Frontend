@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState } from "react"
+import { usePipelineData } from "../pipeline/PipelineStatus"
 
 // 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
 const dummyContentGeneration = {
@@ -24,9 +25,36 @@ const dummyContentGeneration = {
 }
 
 export default function LLMContentGeneration() {
+  // 파이프라인 데이터 가져오기
+  const pipelineData = usePipelineData()
+  
   // 지역 상태로 모델 선택 관리
   const [selectedModel, setSelectedModel] = useState(dummyContentGeneration.selectedModel)
-  const contentGeneration = { ...dummyContentGeneration, selectedModel } // 임시로 더미 데이터 사용
+  
+  // 파이프라인에서 콘텐츠 생성 데이터가 있으면 사용, 없으면 더미 데이터 사용
+  const contentResult = pipelineData.stageResults.contentGeneration || null
+  const contentProgress = pipelineData.progress.content_generation || { status: 'pending', progress: 0 }
+  
+  const contentGeneration = contentResult ? {
+    selectedModel,
+    progress: contentProgress.progress,
+    generatedCharacters: contentResult.content?.length || 0,
+    generatedTags: contentResult.tags?.length || 0,
+    logs: [
+      {
+        id: '1',
+        title: `블로그 글 작성 ${contentProgress.status === 'completed' ? '완료' : contentProgress.status === 'running' ? '진행 중' : '대기 중'}`,
+        description: `${selectedModel}로 콘텐츠 생성 ${contentProgress.status === 'completed' ? '완료' : '중...'}`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      },
+      ...(contentProgress.status === 'completed' && contentResult ? [{
+        id: '2',
+        title: '제목 및 태그 생성 완료',
+        description: `${contentResult.tags?.length || 0}개 태그와 매력적인 제목 생성`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }] : [])
+    ],
+  } : { ...dummyContentGeneration, selectedModel }
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
