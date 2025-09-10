@@ -69,7 +69,7 @@ export default function AdminDashboard() {
                 <PipelineStatus />
               </div>
 
-              {/* 기능 카드들 그리드 */}
+              {/* 기능 카드들 그리드 - 각 컴포넌트에서 usePipelineData 훅 직접 사용 */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <ScheduleManagement />
                 <KeywordExtraction />
