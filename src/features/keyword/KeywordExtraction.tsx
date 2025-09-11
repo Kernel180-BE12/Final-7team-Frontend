@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { usePipelineData } from "../pipeline/PipelineStatus"
+import { usePipelineData } from "@/hooks/usePipelineData"
+
+interface KeywordData {
+  keyword: string;
+  selected?: boolean;
+}
+
 
 // 임시 더미 데이터 (파이프라인 데이터가 없을 때 사용)
 const dummyKeywords = {
@@ -28,26 +34,26 @@ export default function KeywordExtraction() {
   const pipelineData = usePipelineData()
   
   // 파이프라인에서 키워드 데이터가 있으면 사용, 없으면 더미 데이터 사용
-  const keywordResults = Array.isArray(pipelineData.stageResults.keywordExtraction) 
+  const keywordResults: KeywordData[] = Array.isArray(pipelineData.stageResults.keywordExtraction) 
     ? pipelineData.stageResults.keywordExtraction 
     : []
   const keywordProgress = pipelineData.progress.keyword_extraction || { status: 'pending', progress: 0 }
   
   const keywords = keywordResults.length > 0 ? {
     collectedKeywords: keywordResults.length,
-    selectedKeywords: keywordResults.filter((k: any) => k && k.selected).length || 1,
-    selectedKeyword: keywordResults.find((k: any) => k && k.selected)?.keyword || keywordResults[0]?.keyword || '키워드 없음',
-    keywords: keywordResults.map((k: any) => k && k.keyword).filter(Boolean) || [],
+    selectedKeywords: keywordResults.filter((k: KeywordData) => k && k.selected).length || 1,
+    selectedKeyword: keywordResults.find((k: KeywordData) => k && k.selected)?.keyword || keywordResults[0]?.keyword || '키워드 없음',
+    keywords: keywordResults.map((k: KeywordData) => k && k.keyword).filter(Boolean) || [],
     logs: [
       {
         id: '1',
         title: `키워드 수집 ${keywordProgress.status === 'completed' ? '완료' : keywordProgress.status === 'running' ? '진행 중' : '대기 중'}`,
-        description: `${keywordResults.length}개 키워드 추출 ${keywordProgress.status === 'completed' ? '성공' : ''}`,
+        description: `${keywordResults.length}개 키워드 추출 ${keywordProgress.status === 'completed' ? '성공' : keywordProgress.status === 'running' ? '진행 중' : '대기 중'}`,
         timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       },
       ...(keywordProgress.status === 'completed' && keywordResults.length > 0 ? [{
         id: '2',
-        title: `선택된 키워드: "${keywordResults.find((k: any) => k.selected)?.keyword || keywordResults[0]?.keyword}"`,
+        title: `선택된 키워드: "${keywordResults.find((k: KeywordData) => k.selected)?.keyword || keywordResults[0]?.keyword}"`,
         description: '우선순위 1위 키워드 자동 선택',
         timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       }] : [])
