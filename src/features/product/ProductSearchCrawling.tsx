@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { usePipelineData } from "../pipeline/PipelineStatus"
+import { usePipelineData } from "@/hooks/usePipelineData"
 
 // 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
 const dummyProductSearch = {
@@ -26,13 +26,16 @@ export default function ProductSearchCrawling() {
   // 파이프라인 데이터 가져오기
   const pipelineData = usePipelineData()
   
+  // 디버깅용 로그 (임시)
+  console.log('ProductSearchCrawling - pipelineData:', pipelineData)
+  
   // 파이프라인에서 상품 크롤링 데이터가 있으면 사용, 없으면 더미 데이터 사용
   const productResults = Array.isArray(pipelineData.stageResults.productCrawling) 
     ? pipelineData.stageResults.productCrawling 
     : []
   const productProgress = pipelineData.progress.product_crawling || { status: 'pending', progress: 0 }
   
-  const productSearch = productResults.length > 0 ? {
+  const productSearch = pipelineData.isRunning ? {
     status: productProgress.status as 'searching' | 'crawling' | 'completed',
     targetSite: 'ssadagu.kr',
     progress: productProgress.progress,

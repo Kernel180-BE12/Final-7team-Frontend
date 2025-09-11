@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState } from "react"
-import { usePipelineData } from "../pipeline/PipelineStatus"
+import { usePipelineData } from "@/hooks/usePipelineData"
 
 // 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
 const dummyContentGeneration = {
@@ -38,8 +38,8 @@ export default function LLMContentGeneration() {
   const contentGeneration = contentResult ? {
     selectedModel,
     progress: contentProgress.progress,
-    generatedCharacters: contentResult.content?.length || 0,
-    generatedTags: contentResult.tags?.length || 0,
+    generatedCharacters: contentResult.contents?.[0]?.wordCount || 0,
+    generatedTags: contentResult.contents?.length || 0,
     logs: [
       {
         id: '1',
@@ -50,7 +50,7 @@ export default function LLMContentGeneration() {
       ...(contentProgress.status === 'completed' && contentResult ? [{
         id: '2',
         title: '제목 및 태그 생성 완료',
-        description: `${contentResult.tags?.length || 0}개 태그와 매력적인 제목 생성`,
+        description: `${contentResult.contents?.length || 0}개 콘텐츠와 매력적인 제목 생성`,
         timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       }] : [])
     ],
