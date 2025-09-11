@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { usePipelineData } from "../pipeline/PipelineStatus"
+import { usePipelineData } from "@/hooks/usePipelineData"
 
 // 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
 const dummyMonitoring = {
@@ -35,34 +35,35 @@ export default function ResultMonitoring() {
   // 파이프라인 데이터를 기반으로 모니터링 정보 생성
   const getCurrentPipelineStatus = () => {
     try {
-      const { progress, currentExecution } = pipelineData || {}
+      const { progress, currentExecution } = pipelineData
       if (!currentExecution || !progress) return dummyMonitoring
       
       // progress 객체의 안전한 처리
-      const stages = Object.values(progress || {}).filter(stage => stage && typeof stage === 'object' && stage.status)
+      const stages = Object.values(progress).filter(stage => stage && typeof stage === 'object' && 'status' in stage)
       const completedStages = stages.filter(stage => stage.status === 'completed').length
       const failedStages = stages.filter(stage => stage.status === 'failed').length
+      const totalStages = stages.length > 0 ? stages.length : 1
       
       return {
       successCount: completedStages,
       failureCount: failedStages,
-      successRate: completedStages > 0 ? Math.round((completedStages / (completedStages + failedStages)) * 100) : 0,
+      successRate: totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0,
       recentLogs: [
         ...(progress?.keyword_extraction?.status === 'completed' ? [{
           id: '1',
           title: '키워드 추출 성공',
-          description: `${Array.isArray(pipelineData?.stageResults?.keywordExtraction) ? pipelineData.stageResults.keywordExtraction.length : 0}개 키워드 추출 완료`,
+          description: `${Array.isArray(pipelineData.stageResults?.keywordExtraction) ? pipelineData.stageResults.keywordExtraction.length : 0}개 키워드 추출 완료`,
           type: 'success' as 'success' | 'failure' | 'pending',
         }] : progress?.keyword_extraction?.status === 'running' ? [{
           id: '1',
           title: '키워드 추출 진행 중',
-          description: `키워드 추출 ${progress.keyword_extraction?.progress || 0}% 진행`,
+          description: `키워드 추출 ${progress?.keyword_extraction?.progress || 0}% 진행`,
           type: 'pending' as 'success' | 'failure' | 'pending',
         }] : []),
         ...(progress?.product_crawling?.status === 'completed' ? [{
           id: '2',
           title: '상품 크롤링 성공',
-          description: `${Array.isArray(pipelineData?.stageResults?.productCrawling) ? pipelineData.stageResults.productCrawling.length : 0}개 상품 크롤링 완료`,
+          description: `${Array.isArray(pipelineData.stageResults?.productCrawling) ? pipelineData.stageResults.productCrawling.length : 0}개 상품 크롤링 완료`,
           type: 'success' as 'success' | 'failure' | 'pending',
         }] : progress?.product_crawling?.status === 'running' ? [{
           id: '2',
@@ -100,7 +101,7 @@ export default function ResultMonitoring() {
     }
   }
   
-  const monitoring = pipelineData?.isRunning ? getCurrentPipelineStatus() : dummyMonitoring
+  const monitoring = pipelineData.isRunning ? getCurrentPipelineStatus() : dummyMonitoring
 
   const getStatusBadge = (type: 'success' | 'failure' | 'pending') => {
     switch (type) {
