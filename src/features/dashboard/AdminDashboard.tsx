@@ -8,7 +8,7 @@ import { LLMContentGeneration } from "../content";
 import { PublishingManagement } from "../publishing";
 import { ResultMonitoring } from "../monitoring";
 import { PipelineStatus } from "../pipeline";
-import { ApiTest } from "@/components/ApiTest";
+import { SystemStatus } from "../system";
 
 export default function AdminDashboard() {
   // 전역 상태에서 현재 활성 네비게이션만 가져오기 (메뉴 로직은 Sidebar 컴포넌트로 이동)
@@ -54,12 +54,6 @@ export default function AdminDashboard() {
             <p className="text-gray-600 text-sm">
               ssadagu.kr 상품 기반 네이버 블로그 자동 발행 시스템
             </p>
-          </div>
-          {/* 백엔드 연결 테스트 */}
-          <div className="mb-8">
-            {" "}
-            {/* API 연결 테스트 섹션 */}
-            <ApiTest />
           </div>
           {/* 선택된 메뉴에 따른 콘텐츠 표시 */}
           {activeNav === "대시보드" && (
@@ -121,6 +115,9 @@ export default function AdminDashboard() {
               {/* 결과 모니터링 단독 표시 */}
               <ResultMonitoring />
             </div>
+          )}
+          {activeNav === "시스템 상태" && (
+            <SystemStatus />
           )}
         </main>
         {/* 추가적인 사이드바나 정보 패널이 필요하면 여기에 추가 */}

@@ -13,7 +13,19 @@ import type {
   PipelineControlResponse,
   PipelineHistoryResponse,
   PipelineResultResponse,
+  SystemHealthResponse,
 } from "./types";
+
+// API 에러 타입 정의
+interface ApiError {
+  isNotImplemented?: boolean;
+  message?: string;
+  data?: unknown;
+  response?: {
+    status: number;
+    data: unknown;
+  };
+}
 
 // API 클라이언트 설정
 const apiClient = axios.create({
@@ -23,6 +35,28 @@ const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// 응답 인터셉터 - 404 에러 처리
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    // axios 에러인지 확인하는 타입 가드
+    const isAxiosError = (err: unknown): err is { response?: { status: number }; config?: { url: string } } => {
+      return typeof err === 'object' && err !== null && 'response' in err;
+    };
+
+    if (isAxiosError(error) && error.response?.status === 404) {
+      console.warn(`API 엔드포인트가 구현되지 않음: ${error.config?.url}`);
+      // 404 에러를 특별한 형태로 변환
+      return Promise.reject({
+        ...error,
+        isNotImplemented: true,
+        message: "해당 기능이 아직 구현되지 않았습니다."
+      } as ApiError);
+    }
+    return Promise.reject(error);
+  }
+);
 
 // API 함수들
 export const menuApi = {
@@ -163,11 +197,58 @@ export const pipelineApi = {
     limit?: number;
     status?: string;
   }): Promise<PipelineHistoryResponse> => {
-    const response = await apiClient.get<PipelineHistoryResponse>(
-      "/pipeline/history",
-      { params }
-    );
-    return response.data;
+    try {
+      const response = await apiClient.get<PipelineHistoryResponse>(
+        "/pipeline/history",
+        { params }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.isNotImplemented) {
+        // 백엔드 미구현 시 임시 데이터 반환
+        return {
+          success: true,
+          data: {
+            executions: [
+              {
+                executionId: 1,
+                scheduleId: 1,
+                status: "completed",
+                startedAt: new Date(Date.now() - 3600000).toISOString(),
+                completedAt: new Date().toISOString(),
+                duration: "1시간",
+                results: {
+                  keywordsExtracted: 15,
+                  productsCrawled: 42,
+                  contentsGenerated: 8,
+                  contentsPublished: 6
+                }
+              },
+              {
+                executionId: 2,
+                scheduleId: 1,
+                status: "running",
+                startedAt: new Date(Date.now() - 1800000).toISOString(),
+                duration: "30분",
+                results: {
+                  keywordsExtracted: 10,
+                  productsCrawled: 25,
+                  contentsGenerated: 0,
+                  contentsPublished: 0
+                }
+              }
+            ],
+            pagination: {
+              currentPage: params?.page || 1,
+              totalPages: 1,
+              totalCount: 2
+            }
+          }
+        };
+      }
+      throw error;
+    }
   },
 
   // 파이프라인 실행 결과 상세 조회
@@ -176,6 +257,67 @@ export const pipelineApi = {
       `/pipeline/result/${executionId}`
     );
     return response.data;
+  },
+};
+
+// System Health API
+export const systemApi = {
+  // 시스템 전체 상태 조회
+  getHealth: async (): Promise<SystemHealthResponse> => {
+    try {
+      const response = await apiClient.get<SystemHealthResponse>('/system/health');
+      return response.data;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.isNotImplemented) {
+        // 백엔드 미구현 시 임시 데이터 반환
+        return {
+          success: true,
+          data: {
+            status: "healthy",
+            services: {
+              database: "up",
+              llm: "up", 
+              crawler: "degraded",
+              scheduler: "up"
+            },
+            version: "1.0.0-dev",
+            lastChecked: new Date().toISOString()
+          },
+          message: "시스템 상태 API가 구현 중입니다. 임시 데이터를 표시합니다."
+        };
+      }
+      throw error;
+    }
+  },
+
+  // 특정 서비스 상태 조회
+  getServiceStatus: async (serviceName: string): Promise<SystemHealthResponse> => {
+    try {
+      const response = await apiClient.get<SystemHealthResponse>(`/system/health/${serviceName}`);
+      return response.data;
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      if (apiError.isNotImplemented) {
+        // 백엔드 미구현 시 임시 데이터 반환
+        return {
+          success: true,
+          data: {
+            status: "healthy",
+            services: {
+              database: serviceName === "database" ? "up" : "up",
+              llm: serviceName === "llm" ? "up" : "up",
+              crawler: serviceName === "crawler" ? "degraded" : "up", 
+              scheduler: serviceName === "scheduler" ? "up" : "up"
+            },
+            version: "1.0.0-dev",
+            lastChecked: new Date().toISOString()
+          },
+          message: `${serviceName} 상태 API가 구현 중입니다. 임시 데이터를 표시합니다.`
+        };
+      }
+      throw error;
+    }
   },
 };
 

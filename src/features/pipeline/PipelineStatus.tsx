@@ -7,34 +7,6 @@ import type {
   PipelineStageProgress,
 } from "@/lib/types";
 
-// 파이프라인 데이터를 다른 컴포넌트에서 사용할 수 있는 커스텀 훅
-export function usePipelineData() {
-  const { getActiveExecutionsList } = usePipelineStore();
-  const activeExecutions = getActiveExecutionsList();
-  
-  // 가장 최신 실행 중인 파이프라인의 데이터 반환
-  const latestExecution = activeExecutions.find(
-    execution => execution.overallStatus === "running" || execution.overallStatus === "paused"
-  ) || activeExecutions[0];
-
-  return {
-    isRunning: activeExecutions.length > 0,
-    currentExecution: latestExecution,
-    stageResults: latestExecution?.stageResults || {
-      keywordExtraction: [],
-      productCrawling: [],
-      contentGeneration: null,
-      contentPublishing: null
-    },
-    progress: latestExecution?.progress || {
-      keyword_extraction: { status: "pending", progress: 0 },
-      product_crawling: { status: "pending", progress: 0 },
-      content_generation: { status: "pending", progress: 0 },
-      content_publishing: { status: "pending", progress: 0 }
-    }
-  };
-}
-
 export default function PipelineStatus() {
   const { getActiveExecutionsList, setActiveExecution, removeActiveExecution } =
     usePipelineStore();
@@ -62,13 +34,13 @@ export default function PipelineStatus() {
         },
         stageResults: {
           keywordExtraction: [
-            { keyword: "겨울 패딩", selected: true },
-            { keyword: "패딩 추천", selected: false },
-            { keyword: "겨울 코트", selected: false }
+            { keyword: "겨울 패딩", relevanceScore: 0.95, category: "패션" },
+            { keyword: "패딩 추천", relevanceScore: 0.87, category: "의류" },
+            { keyword: "겨울 코트", relevanceScore: 0.72, category: "패션" }
           ],
           productCrawling: [
-            { productId: "1", name: "겨울 패딩 A", price: 89000 },
-            { productId: "2", name: "겨울 패딩 B", price: 120000 }
+            { title: "겨울 패딩 A", price: 89000, platform: "coupang", productUrl: "https://coupang.com/product1" },
+            { title: "겨울 패딩 B", price: 120000, platform: "naver", productUrl: "https://naver.com/product2" }
           ],
           contentGeneration: null,
           contentPublishing: null
@@ -90,18 +62,25 @@ export default function PipelineStatus() {
         },
         stageResults: {
           keywordExtraction: [
-            { keyword: "겨울 패딩", selected: true },
-            { keyword: "패딩 추천", selected: false },
-            { keyword: "겨울 코트", selected: false }
+            { keyword: "겨울 패딩", relevanceScore: 0.95, category: "패션" },
+            { keyword: "패딩 추천", relevanceScore: 0.87, category: "의류" },
+            { keyword: "겨울 코트", relevanceScore: 0.72, category: "패션" }
           ],
           productCrawling: [
-            { productId: "1", name: "겨울 패딩 A", price: 89000 },
-            { productId: "2", name: "겨울 패딩 B", price: 120000 },
-            { productId: "3", name: "겨울 패딩 C", price: 150000 }
+            { title: "겨울 패딩 A", price: 89000, platform: "coupang", productUrl: "https://coupang.com/product1" },
+            { title: "겨울 패딩 B", price: 120000, platform: "naver", productUrl: "https://naver.com/product2" },
+            { title: "겨울 패딩 C", price: 150000, platform: "gmarket", productUrl: "https://gmarket.co.kr/product3" }
           ],
           contentGeneration: {
-            content: "겨울 패딩 추천에 관한 블로그 콘텐츠입니다. 올해 겨울을 따뜻하게 보내기 위한 최고의 패딩을 소개합니다...",
-            tags: ["겨울패딩", "패딩추천", "겨울코트", "아우터", "방한용품"]
+            contents: [
+              {
+                title: "겨울 패딩 추천 가이드",
+                contentType: "blog",
+                wordCount: 1200,
+                contentPreview: "겨울 패딩 추천에 관한 블로그 콘텐츠입니다. 올해 겨울을 따뜻하게 보내기 위한 최고의 패딩을 소개합니다..."
+              }
+            ],
+            totalCount: 1
           },
           contentPublishing: null
         },
@@ -168,8 +147,8 @@ export default function PipelineStatus() {
       }
     };
 
-    // 활성 파이프라인이 있을 때만 폴링 시작 (2초 간격으로 단축)
-    if (activeExecutions.length > 0) {
+    // 개발 환경에서는 API 호출 비활성화 (샘플 데이터 사용)
+    if (!import.meta.env.DEV && activeExecutions.length > 0) {
       fetchActiveStatuses(); // 즉시 한 번 실행
       const interval = setInterval(fetchActiveStatuses, 2000); // 2초마다 상태 확인
       setRefreshInterval(interval);
@@ -347,3 +326,4 @@ export default function PipelineStatus() {
     </div>
   );
 }
+

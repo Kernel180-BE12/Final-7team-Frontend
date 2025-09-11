@@ -35,6 +35,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   { id: 5, label: "LLM 콘텐츠", path: "/content", orderSeq: 5, roleRequired: "admin", isActive: true },
   { id: 6, label: "발행 관리", path: "/publishing", orderSeq: 6, roleRequired: "admin", isActive: true },
   { id: 7, label: "결과 모니터링", path: "/monitoring", orderSeq: 7, roleRequired: "admin", isActive: true },
+  { id: 8, label: "시스템 상태", path: "/system", orderSeq: 8, roleRequired: "admin", isActive: true },
 ];
 
 // Schedule Types
@@ -188,16 +189,66 @@ export interface PipelineStatusResponse {
       content_publishing: PipelineStageProgress;
     };
     stageResults?: {
-      keywordExtraction: any[];
-      productCrawling: any[];
-      contentGeneration: any;
-      contentPublishing: any;
+      keywordExtraction: Array<{
+        keyword: string;
+        relevanceScore: number;
+        category: string;
+      }>;
+      productCrawling: Array<{
+        title: string;
+        price: number;
+        platform: string;
+        productUrl: string;
+      }>;
+      contentGeneration: {
+        contents: Array<{
+          title: string;
+          contentType: string;
+          wordCount: number;
+          contentPreview: string;
+        }>;
+        totalCount: number;
+      } | null;
+      contentPublishing: {
+        publications: Array<{
+          platform: string;
+          publishedUrl: string;
+          status: "published" | "failed";
+        }>;
+        successCount: number;
+        failedCount: number;
+      } | null;
     };
     results?: {
-      keywords?: any[];
-      products?: any[];
-      content?: any;
-      publishingStatus?: any;
+      keywords?: Array<{
+        keyword: string;
+        relevanceScore: number;
+        category: string;
+      }>;
+      products?: Array<{
+        title: string;
+        price: number;
+        platform: string;
+        productUrl: string;
+      }>;
+      content?: {
+        contents: Array<{
+          title: string;
+          contentType: string;
+          wordCount: number;
+          contentPreview: string;
+        }>;
+        totalCount: number;
+      };
+      publishingStatus?: {
+        publications: Array<{
+          platform: string;
+          publishedUrl: string;
+          status: "published" | "failed";
+        }>;
+        successCount: number;
+        failedCount: number;
+      };
     };
     logs: Array<{
       timestamp: string;
@@ -300,6 +351,31 @@ export interface PipelineResultResponse {
       timestamp: string;
     }>;
   };
+}
+
+// System Health Types
+export interface SystemHealthResponse {
+  success: boolean;
+  data?: {
+    status: "healthy" | "degraded" | "down";
+    services: {
+      database: "up" | "down" | "degraded";
+      llm: "up" | "down" | "degraded";
+      crawler: "up" | "down" | "degraded";
+      scheduler: "up" | "down" | "degraded";
+    };
+    version: string;
+    lastChecked?: string;
+  };
+  message?: string;
+}
+
+export interface ServiceStatus {
+  name: string;
+  status: "up" | "down" | "degraded";
+  responseTime?: number;
+  lastChecked: string;
+  description: string;
 }
 
 // 추후 다른 API 타입들도 여기에 추가
