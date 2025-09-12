@@ -35,6 +35,9 @@ export default function ResultMonitoring() {
   // 파이프라인 데이터를 기반으로 모니터링 정보 생성
   const getCurrentPipelineStatus = () => {
     try {
+      // 개발 환경에서는 항상 더미 데이터 사용
+      if (import.meta.env.DEV) return dummyMonitoring
+      
       const { progress, currentExecution } = pipelineData
       if (!currentExecution || !progress) return dummyMonitoring
       
@@ -101,7 +104,7 @@ export default function ResultMonitoring() {
     }
   }
   
-  const monitoring = pipelineData.isRunning ? getCurrentPipelineStatus() : dummyMonitoring
+  const monitoring = import.meta.env.DEV ? dummyMonitoring : (pipelineData.isRunning ? getCurrentPipelineStatus() : dummyMonitoring)
 
   const getStatusBadge = (type: 'success' | 'failure' | 'pending') => {
     switch (type) {
@@ -128,8 +131,9 @@ export default function ResultMonitoring() {
     }
   }
 
+
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center">
           <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-white text-xl mr-4">
@@ -138,7 +142,7 @@ export default function ResultMonitoring() {
           결과 모니터링
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0 flex-1 overflow-y-auto">
         <div className="flex justify-between mb-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-700">{monitoring.successCount}</div>
