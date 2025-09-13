@@ -33,13 +33,24 @@ export default function KeywordExtraction() {
   // 파이프라인 데이터 가져오기
   const pipelineData = usePipelineData()
   
-  // 파이프라인에서 키워드 데이터가 있으면 사용, 없으면 더미 데이터 사용
-  const keywordResults: KeywordData[] = Array.isArray(pipelineData.stageResults.keywordExtraction) 
-    ? pipelineData.stageResults.keywordExtraction 
-    : []
-  const keywordProgress = pipelineData.progress.keyword_extraction || { status: 'pending', progress: 0 }
+  // 개발 환경이면 더미 데이터 우선 사용
+  const keywordResults: KeywordData[] = import.meta.env.DEV 
+    ? [
+        { keyword: "겨울 패딩", selected: true },
+        { keyword: "방한용품", selected: false },
+        { keyword: "아우터", selected: false },
+        { keyword: "패딩 추천", selected: false },
+        { keyword: "겨울 코트", selected: false }
+      ]
+    : (Array.isArray(pipelineData.stageResults.keywordExtraction) 
+        ? pipelineData.stageResults.keywordExtraction 
+        : [])
   
-  const keywords = keywordResults.length > 0 ? {
+  const keywordProgress = import.meta.env.DEV 
+    ? { status: 'completed', progress: 100 }
+    : (pipelineData.progress.keyword_extraction || { status: 'pending', progress: 0 })
+  
+  const keywords = (import.meta.env.DEV || keywordResults.length > 0) ? {
     collectedKeywords: keywordResults.length,
     selectedKeywords: keywordResults.filter((k: KeywordData) => k && k.selected).length || 1,
     selectedKeyword: keywordResults.find((k: KeywordData) => k && k.selected)?.keyword || keywordResults[0]?.keyword || '키워드 없음',
@@ -61,7 +72,7 @@ export default function KeywordExtraction() {
   } : dummyKeywords
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center">
           <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-white text-xl mr-4">
@@ -70,7 +81,7 @@ export default function KeywordExtraction() {
           키워드 추출 현황
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0 flex-1 overflow-y-auto">
         <div className="space-y-3">
           {keywords.logs.map((log, index) => (
             <div key={log.id} className={`flex justify-between items-center py-3 ${index < keywords.logs.length - 1 ? 'border-b border-gray-100' : ''}`}>
