@@ -17,7 +17,6 @@ export function ApiTest() {
     try {
       const result = await dashboardApi.testConnection("admin", "ronlee");
       setResponse(result);
-      console.log("백엔드 응답:", result);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "알 수 없는 오류";

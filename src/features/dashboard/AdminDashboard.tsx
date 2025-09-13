@@ -9,10 +9,12 @@ import { PublishingManagement } from "../publishing";
 import { ResultMonitoring } from "../monitoring";
 import { PipelineStatus } from "../pipeline";
 import { SystemStatus } from "../system";
+import { NetworkStatusTest } from "@/components/test/NetworkStatusTest";
 
 export default function AdminDashboard() {
   // 전역 상태에서 현재 활성 네비게이션만 가져오기 (메뉴 로직은 Sidebar 컴포넌트로 이동)
   const { activeNav } = useAppStore();
+
 
   useEffect(() => {
     // 진행률 애니메이션
@@ -65,51 +67,64 @@ export default function AdminDashboard() {
 
               {/* 기능 카드들 그리드 - 각 컴포넌트에서 usePipelineData 훅 직접 사용 */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <ScheduleManagement />
-                <KeywordExtraction />
-                <ProductSearchCrawling />
-                <LLMContentGeneration />
-                <PublishingManagement />
-                <ResultMonitoring />
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <ScheduleManagement />
+                </div>
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <KeywordExtraction />
+                </div>
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <ProductSearchCrawling />
+                </div>
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <LLMContentGeneration compact={true} />
+                </div>
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <PublishingManagement />
+                </div>
+                <div className="h-96 overflow-y-auto dashboard-card-wrapper">
+                  <ResultMonitoring />
+                </div>
               </div>
+              
             </>
           )}
-          {activeNav === "스케줄 관리" && (
+          {(activeNav === "스케줄 관리" || activeNav === "스케줄관리") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* 스케줄 관리 단독 표시 */}
               <ScheduleManagement />
             </div>
           )}
-          {activeNav === "키워드 추출" && (
+          {(activeNav === "키워드 추출" || activeNav === "키워드추출") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* 키워드 추출 단독 표시 */}
               <KeywordExtraction />
             </div>
           )}
-          {activeNav === "상품 검색" && (
+          {(activeNav === "상품 검색" || activeNav === "상품검색") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* 상품 검색 단독 표시 */}
               <ProductSearchCrawling />
             </div>
           )}
-          {activeNav === "LLM 콘텐츠" && (
+          {(activeNav === "LLM 콘텐츠" || activeNav === "LLM콘텐츠") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* LLM 콘텐츠 단독 표시 */}
               <LLMContentGeneration />
             </div>
           )}
-          {activeNav === "발행 관리" && (
+          {(activeNav === "발행 관리" || activeNav === "발행관리") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* 발행 관리 단독 표시 */}
               <PublishingManagement />
             </div>
           )}
-          {activeNav === "결과 모니터링" && (
+          {(activeNav === "결과 모니터링" || activeNav === "결과모니터링") && (
             <div className="max-w-2xl mx-auto">
               {" "}
               {/* 결과 모니터링 단독 표시 */}
@@ -118,6 +133,11 @@ export default function AdminDashboard() {
           )}
           {activeNav === "시스템 상태" && (
             <SystemStatus />
+          )}
+          {activeNav === "네트워크 테스트" && (
+            <div className="max-w-2xl mx-auto">
+              <NetworkStatusTest />
+            </div>
           )}
         </main>
         {/* 추가적인 사이드바나 정보 패널이 필요하면 여기에 추가 */}
