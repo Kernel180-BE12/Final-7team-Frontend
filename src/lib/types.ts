@@ -28,24 +28,48 @@ export interface MenuApiResponse {
 
 // 기본 메뉴 데이터 (API 실패 시 또는 초기 로드용)
 export const DEFAULT_MENU_ITEMS: MenuItem[] = [
-  { id: 1, label: "대시보드", path: "/dashboard", orderSeq: 1, roleRequired: "admin", isActive: true },
-  { id: 2, label: "스케줄 관리", path: "/schedule", orderSeq: 2, roleRequired: "admin", isActive: true },
-  { id: 3, label: "키워드 추출", path: "/keyword", orderSeq: 3, roleRequired: "admin", isActive: true },
-  { id: 4, label: "상품 검색", path: "/product", orderSeq: 4, roleRequired: "admin", isActive: true },
-  { id: 5, label: "LLM 콘텐츠", path: "/content", orderSeq: 5, roleRequired: "admin", isActive: true },
-  { id: 6, label: "발행 관리", path: "/publishing", orderSeq: 6, roleRequired: "admin", isActive: true },
-  { id: 7, label: "결과 모니터링", path: "/monitoring", orderSeq: 7, roleRequired: "admin", isActive: true },
-  { id: 8, label: "시스템 상태", path: "/system", orderSeq: 8, roleRequired: "admin", isActive: true },
+  {
+    id: 1,
+    label: "대시보드",
+    path: "/dashboard",
+    orderSeq: 1,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
+    id: 7,
+    label: "결과 모니터링",
+    path: "/monitoring",
+    orderSeq: 7,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
+    id: 8,
+    label: "시스템 상태",
+    path: "/system",
+    orderSeq: 8,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
+    id: 9,
+    label: "네트워크 테스트",
+    path: "/network-test",
+    orderSeq: 9,
+    roleRequired: "admin",
+    isActive: true,
+  },
 ];
 
 // Schedule Types
-export type ExecutionCycle = '매일 실행' | '주간 실행' | '월간 실행';
+export type ExecutionCycle = "매일 실행" | "주간 실행" | "월간 실행";
 
 // ExecutionCycle 옵션들을 배열로 제공
 export const EXECUTION_CYCLE_OPTIONS: ExecutionCycle[] = [
-  '매일 실행',
-  '주간 실행', 
-  '월간 실행'
+  "매일 실행",
+  "주간 실행",
+  "월간 실행",
 ];
 
 export interface ScheduleRequest {
@@ -53,12 +77,24 @@ export interface ScheduleRequest {
   executionTime: string;
   keywordCount: number;
   publishCount: number;
+  aiModel: string;
 }
 
 export interface ScheduleResponse {
   success: boolean;
   message: string;
   scheduleId?: number;
+  data?: {
+    scheduleId: number;
+    executionCycle: ExecutionCycle;
+    executionTime: string;
+    keywordCount: number;
+    publishCount: number;
+    aiModel: string;
+    isActive: boolean;
+    createdAt: string;
+    nextExecutionAt: string;
+  };
 }
 
 // Auth Types
@@ -107,6 +143,7 @@ export interface PipelineConfig {
 export interface PipelineExecuteRequest {
   keywordCount: number;
   publishCount: number;
+  aiModel: string;
   executeImmediately?: boolean;
 }
 
@@ -162,10 +199,10 @@ export interface ContentPublishingResult {
 }
 
 // 단계별 결과 타입 유니온
-export type StageResult = 
-  | KeywordExtractionResult 
-  | ProductCrawlingResult 
-  | ContentGenerationResult 
+export type StageResult =
+  | KeywordExtractionResult
+  | ProductCrawlingResult
+  | ContentGenerationResult
   | ContentPublishingResult;
 
 export interface PipelineStageProgress {
