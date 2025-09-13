@@ -153,12 +153,10 @@ export default function SystemStatus() {
     try {
       const result = await dashboardApi.testConnection("admin", "ronlee");
       setApiResponse(result);
-      console.log("백엔드 응답:", result);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "알 수 없는 오류";
       setError("apiTest", `연결 실패: ${errorMessage}`);
-      console.error("API 에러:", err);
     } finally {
       setLoading("apiTest", false);
     }
@@ -222,7 +220,7 @@ export default function SystemStatus() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">백엔드 연결 테스트</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6 pt-0">
               <button
                 onClick={testConnection}
                 disabled={uiLoading.apiTest}
@@ -256,7 +254,7 @@ export default function SystemStatus() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">전체 상태</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6 pt-0">
               {systemHealth?.success ? (
                 <div className="flex items-center">
                   <span
@@ -305,7 +303,7 @@ export default function SystemStatus() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">서비스 현황</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6 pt-0">
               {systemHealth?.success ? (
                 <div className="grid grid-cols-2 gap-4">
                   {Object.entries(systemHealth.data?.services || {}).map(
@@ -371,7 +369,7 @@ export default function SystemStatus() {
                         </span>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 pt-0">
                       <div
                         className={`px-3 py-2 rounded-full text-center text-sm font-semibold mb-3 ${getStatusColor(
                           status
@@ -414,7 +412,7 @@ export default function SystemStatus() {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base">서비스 상태</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6 pt-0">
                     <div className="text-center text-gray-500">상태 불명</div>
                   </CardContent>
                 </Card>

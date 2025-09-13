@@ -89,6 +89,7 @@ export default function ScheduleManagement() {
       const executeResponse = await pipelineApi.execute({
         keywordCount: schedule.keywordCount,
         publishCount: schedule.publishCount,
+        aiModel: schedule.aiModel,
         executeImmediately: true
       });
 
@@ -121,7 +122,7 @@ export default function ScheduleManagement() {
   };
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       {" "}
       {/* 호버 시 그림자 및 이동 효과가 있는 카드 */}
       <CardHeader>
@@ -133,7 +134,7 @@ export default function ScheduleManagement() {
           스케줄 관리
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-6 pt-0 space-y-4 flex-1 overflow-y-auto">
         {" "}
         {/* 카드 내용 영역, 각 필드 간 간격 */}
         {/* 실행 주기 선택 필드 */}
@@ -209,6 +210,27 @@ export default function ScheduleManagement() {
             placeholder="생성할 콘텐츠 수 (1-100)"
           />
         </div>
+        
+        {/* AI 모델 선택 필드 */}
+        <div>
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            AI 모델 선택
+          </label>
+          <select 
+            className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
+            value={schedule.aiModel}
+            onChange={(e) =>
+              updateScheduleSettings({
+                aiModel: e.target.value,
+              })
+            }
+          >
+            <option value="OpenAI GPT-4">OpenAI GPT-4</option>
+            <option value="Google Gemini">Google Gemini</option>
+            <option value="Claude 3.5">Claude 3.5</option>
+          </select>
+        </div>
+        
         {/* 메시지 표시 영역 */}
         {successMessages.schedule && (
           <div className="p-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">

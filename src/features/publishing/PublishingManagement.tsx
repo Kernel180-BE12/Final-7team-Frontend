@@ -31,12 +31,10 @@ export default function PublishingManagement() {
     dummyPublishing.uploadStatus
   );
 
-  // 파이프라인에서 발행 데이터가 있으면 사용, 없으면 더미 데이터 사용
-  // const publishingResult = pipelineData.stageResults.contentPublishing || null
-  const publishingProgress = pipelineData.progress.content_publishing || {
-    status: "pending",
-    progress: 0,
-  };
+  // 개발 환경에서는 항상 더미 데이터 사용
+  const publishingProgress = import.meta.env.DEV ? 
+    { status: "completed", progress: 100 } : 
+    (pipelineData.progress.content_publishing || { status: "pending", progress: 0 });
 
   const mapPipelineStatus = (
     status: string
@@ -117,13 +115,12 @@ export default function PublishingManagement() {
 
   const handleManualPublish = () => {
     setUploadStatus("uploading");
-    console.log("수동 발행 실행");
     // 3초 후 완료 상태로 변경 (데모용)
     setTimeout(() => setUploadStatus("completed"), 3000);
   };
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center">
           <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-white text-xl mr-4">
@@ -132,7 +129,7 @@ export default function PublishingManagement() {
           자동 발행
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0 flex-1 overflow-y-auto">
         <div className="space-y-3">
           {publishing.logs.map((log, index) => (
             <div
