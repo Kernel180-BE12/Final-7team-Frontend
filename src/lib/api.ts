@@ -16,16 +16,6 @@ import type {
   SystemHealthResponse,
 } from "./types";
 
-// API 에러 타입 정의
-interface ApiError {
-  isNotImplemented?: boolean;
-  message?: string;
-  data?: unknown;
-  response?: {
-    status: number;
-    data: unknown;
-  };
-}
 
 // API 클라이언트 설정
 const apiClient = axios.create({

@@ -1,4 +1,4 @@
-import React from 'react';
+import { } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import { } from 'react';
 import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
 
 export function NetworkStatusBar() {

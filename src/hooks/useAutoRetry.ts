@@ -21,7 +21,7 @@ export function useAutoRetry(
 
   const { isOnline, wasOffline } = useNetworkStatus();
   const retryCountRef = useRef(0);
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const executeRetry = useCallback(async () => {
     if (!failedApiCall || !enabled || retryCountRef.current >= maxRetries) {
