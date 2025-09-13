@@ -7,6 +7,7 @@ export interface ScheduleSettings {
   executionTime: string
   keywordCount: number
   publishCount: number
+  aiModel: string
 }
 
 // 앱의 핵심 상태만 관리 (네비게이션 + 실제 사용 중인 스케줄)
@@ -30,6 +31,7 @@ export const useAppStore = create<AppState>((set) => ({
     executionTime: '08:00',
     keywordCount: 50,
     publishCount: 1,
+    aiModel: 'OpenAI GPT-4',
   },
 
   // 액션 구현

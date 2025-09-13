@@ -147,23 +147,55 @@ export default function PipelineStatus() {
       }
     };
 
+    // 새로운 실행 감지 함수
+    const checkForNewExecutions = async () => {
+      try {
+        const allExecutions = await pipelineApi.getAllExecutions();
+        const currentExecutionIds = new Set(activeExecutions.map(exec => exec.executionId));
+        
+        // 새로운 실행을 찾아서 추가
+        allExecutions.forEach(execution => {
+          if (!currentExecutionIds.has(execution.executionId) && 
+              (execution.overallStatus === "running" || execution.overallStatus === "pending")) {
+            setActiveExecution(execution.executionId, {
+              executionId: execution.executionId,
+              overallStatus: execution.overallStatus,
+              currentStage: execution.currentStage || "시작 중",
+              progress: execution.progress,
+              startedAt: execution.startedAt || new Date().toISOString(),
+              logs: execution.logs || []
+            });
+          }
+        });
+      } catch (error) {
+        console.error("새 실행 감지 중 오류:", error);
+      }
+    };
+
     // 개발 환경에서는 API 호출 비활성화 (샘플 데이터 사용)
-    if (!import.meta.env.DEV && activeExecutions.length > 0) {
-      fetchActiveStatuses(); // 즉시 한 번 실행
-      const interval = setInterval(fetchActiveStatuses, 2000); // 2초마다 상태 확인
-      setRefreshInterval(interval);
+    if (!import.meta.env.DEV) {
+      // 새 실행 확인 (처음 한 번)
+      checkForNewExecutions();
+      
+      if (activeExecutions.length > 0) {
+        fetchActiveStatuses(); // 즉시 한 번 실행
+        const interval = setInterval(fetchActiveStatuses, 2000); // 2초마다 상태 확인
+        setRefreshInterval(interval);
+      }
+      
+      // 30초마다 새 실행 감지
+      const newExecutionInterval = setInterval(checkForNewExecutions, 30000);
+      
+      return () => {
+        if (refreshInterval) clearInterval(refreshInterval);
+        clearInterval(newExecutionInterval);
+      };
     } else {
       if (refreshInterval) {
         clearInterval(refreshInterval);
         setRefreshInterval(null);
       }
     }
-
-    return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
-    };
   }, [activeExecutions.length]);
 
   const getStatusColor = (status: string) => {
