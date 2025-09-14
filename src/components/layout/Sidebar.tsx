@@ -50,6 +50,11 @@ export default function Sidebar() {
     fetchMenuItems();
   }, [setLoading, setError, clearError]);
 
+  const handleMenuClick = (item: MenuItem) => {
+    setActiveNav(item.label);
+    // 모든 메뉴는 대시보드 내에서 콘텐츠 변경만
+  };
+
   return (
     <nav className="w-70 bg-gray-800 p-8 shadow-2xl">
       {" "}
@@ -73,7 +78,7 @@ export default function Sidebar() {
           ) => (
             <li key={item.id}>
               <button
-                onClick={() => setActiveNav(item.label)} // 메뉴 클릭 시 활성 상태 변경
+                onClick={() => handleMenuClick(item)} // 메뉴 클릭 시 활성 상태 변경 및 페이지 이동
                 className={`w-full flex items-center px-5 py-4 rounded-xl transition-all duration-300 font-medium ${
                   activeNav === item.label
                     ? "bg-gray-700 text-white transform translate-x-1"
