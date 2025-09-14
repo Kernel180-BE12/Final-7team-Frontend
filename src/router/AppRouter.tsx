@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { useAuthStore } from "@/store/authStore";
 import { LoginPage, RegisterPage } from "@/features/auth";
 import { AdminDashboard } from "@/features/dashboard";
+import MonitoringDashboard from "@/features/monitoring/MonitoringDashboard";
+import SystemLogs from "@/features/monitoring/SystemLogs";
 
 // 보호된 라우트 컴포넌트
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -58,6 +60,22 @@ export default function AppRouter() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monitoring"
+          element={
+            <ProtectedRoute>
+              <MonitoringDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/logs"
+          element={
+            <ProtectedRoute>
+              <SystemLogs />
             </ProtectedRoute>
           }
         />

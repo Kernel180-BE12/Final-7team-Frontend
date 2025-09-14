@@ -45,10 +45,18 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
     isActive: true,
   },
   {
+    id: 10,
+    label: "작업 로그",
+    path: "/logs",
+    orderSeq: 8,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
     id: 8,
     label: "시스템 상태",
     path: "/system",
-    orderSeq: 8,
+    orderSeq: 9,
     roleRequired: "admin",
     isActive: true,
   },
@@ -56,7 +64,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
     id: 9,
     label: "네트워크 테스트",
     path: "/network-test",
-    orderSeq: 9,
+    orderSeq: 10,
     roleRequired: "admin",
     isActive: true,
   },
@@ -413,6 +421,143 @@ export interface ServiceStatus {
   responseTime?: number;
   lastChecked: string;
   description: string;
+}
+
+// Notification & Alert Types
+export interface SystemNotification {
+  id: string;
+  type: "info" | "warning" | "error" | "success";
+  title: string;
+  message: string;
+  source: "system" | "pipeline" | "scheduler" | "user";
+  timestamp: string;
+  isRead: boolean;
+  priority: "low" | "medium" | "high" | "critical";
+  metadata?: {
+    executionId?: number;
+    scheduleId?: number;
+    service?: string;
+    [key: string]: any;
+  };
+}
+
+export interface NotificationSettings {
+  enableEmail: boolean;
+  enablePush: boolean;
+  enableInApp: boolean;
+  types: {
+    systemErrors: boolean;
+    pipelineEvents: boolean;
+    scheduleUpdates: boolean;
+    performanceAlerts: boolean;
+  };
+  priority: {
+    low: boolean;
+    medium: boolean;
+    high: boolean;
+    critical: boolean;
+  };
+}
+
+// System Log Types
+export interface SystemLog {
+  id: string;
+  timestamp: string;
+  level: "debug" | "info" | "warn" | "error" | "fatal";
+  source: string;
+  message: string;
+  metadata?: {
+    userId?: number;
+    sessionId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    requestId?: string;
+    duration?: number;
+    statusCode?: number;
+    [key: string]: any;
+  };
+  tags?: string[];
+}
+
+export interface LogFilter {
+  level?: SystemLog["level"][];
+  source?: string[];
+  dateFrom?: string;
+  dateTo?: string;
+  searchQuery?: string;
+  tags?: string[];
+}
+
+export interface LogsResponse {
+  success: boolean;
+  data: {
+    logs: SystemLog[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      pageSize: number;
+    };
+  };
+}
+
+// Pipeline Monitoring Extended Types
+export interface PipelineMetrics {
+  executionId: number;
+  totalDuration: number;
+  avgStageTime: {
+    keywordExtraction: number;
+    productCrawling: number;
+    contentGeneration: number;
+    contentPublishing: number;
+  };
+  resourceUsage: {
+    cpuPeak: number;
+    memoryPeak: number;
+    diskIO: number;
+    networkIO: number;
+  };
+  errorRate: number;
+  successRate: number;
+}
+
+export interface PipelineAlert {
+  id: string;
+  executionId: number;
+  type: "performance" | "error" | "timeout" | "resource";
+  severity: "low" | "medium" | "high" | "critical";
+  title: string;
+  description: string;
+  timestamp: string;
+  resolved: boolean;
+  resolvedAt?: string;
+  metadata?: {
+    threshold?: number;
+    actualValue?: number;
+    stage?: string;
+    [key: string]: any;
+  };
+}
+
+// Monitoring Dashboard Types
+export interface MonitoringOverview {
+  systemHealth: {
+    overall: "healthy" | "degraded" | "critical";
+    services: {
+      database: "up" | "down" | "degraded";
+      llm: "up" | "down" | "degraded";
+      crawler: "up" | "down" | "degraded";
+      scheduler: "up" | "down" | "degraded";
+    };
+  };
+  activePipelines: number;
+  recentAlerts: number;
+  unreadNotifications: number;
+  performance: {
+    avgResponseTime: number;
+    errorRate: number;
+    uptime: number;
+  };
 }
 
 // 추후 다른 API 타입들도 여기에 추가
