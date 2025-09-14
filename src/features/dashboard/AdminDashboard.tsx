@@ -10,6 +10,7 @@ import { ResultMonitoring } from "../monitoring";
 import { PipelineStatus } from "../pipeline";
 import { SystemStatus } from "../system";
 import { NetworkStatusTest } from "@/components/test/NetworkStatusTest";
+import SystemLogs from "../monitoring/SystemLogs";
 
 export default function AdminDashboard() {
   // 전역 상태에서 현재 활성 네비게이션만 가져오기 (메뉴 로직은 Sidebar 컴포넌트로 이동)
@@ -137,6 +138,11 @@ export default function AdminDashboard() {
           {activeNav === "네트워크 테스트" && (
             <div className="max-w-2xl mx-auto">
               <NetworkStatusTest />
+            </div>
+          )}
+          {activeNav === "작업 로그" && (
+            <div className="w-full">
+              <SystemLogs />
             </div>
           )}
         </main>
