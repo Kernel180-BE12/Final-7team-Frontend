@@ -45,6 +45,22 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
     isActive: true,
   },
   {
+    id: 2,
+    label: "스케줄 등록",
+    path: "/schedule",
+    orderSeq: 2,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
+    id: 3,
+    label: "스케줄 목록",
+    path: "/schedule/list",
+    orderSeq: 3,
+    roleRequired: "admin",
+    isActive: true,
+  },
+  {
     id: 10,
     label: "작업 로그",
     path: "/logs",
@@ -102,6 +118,29 @@ export interface ScheduleResponse {
     isActive: boolean;
     createdAt: string;
     nextExecutionAt: string;
+  };
+}
+
+// 스케줄 목록 조회 응답 타입
+export interface ScheduleListResponse {
+  success: boolean;
+  message: string;
+  data?: Array<{
+    scheduleId: number;
+    executionCycle: ExecutionCycle;
+    executionTime: string;
+    keywordCount: number;
+    publishCount: number;
+    aiModel: string;
+    isActive: boolean;
+    createdAt: string;
+    nextExecutionAt: string;
+  }>;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    pageSize: number;
   };
 }
 

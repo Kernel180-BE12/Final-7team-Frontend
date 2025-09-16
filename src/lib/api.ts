@@ -3,6 +3,7 @@ import type {
   MenuApiResponse,
   ScheduleRequest,
   ScheduleResponse,
+  ScheduleListResponse,
   LoginRequest,
   RegisterRequest,
   AuthResponse,
@@ -134,9 +135,12 @@ export const scheduleApi = {
     return response.data;
   },
 
-  // 스케줄 조회 API
-  getSchedules: async (): Promise<ScheduleRequest[]> => {
-    const response = await apiClient.get<ScheduleRequest[]>("/schedule");
+  // 스케줄 목록 조회 API
+  getSchedules: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ScheduleListResponse> => {
+    const response = await apiClient.get<ScheduleListResponse>("/schedule/list", { params });
     return response.data;
   },
 
