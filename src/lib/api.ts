@@ -28,7 +28,7 @@ const apiClient = axios.create({
 });
 
 // API 오류 타입 정의
-export interface ApiError {
+export interface CustomApiError {
   message: string;
   status?: number;
   isNetworkError?: boolean;
@@ -41,7 +41,7 @@ export interface ApiError {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const apiError: ApiError = {
+    const apiError: CustomApiError = {
       message: '알 수 없는 오류가 발생했습니다.',
       isNetworkError: false,
       isTimeout: false,
@@ -254,7 +254,7 @@ export const pipelineApi = {
       );
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {
@@ -318,7 +318,7 @@ export const systemApi = {
       const response = await apiClient.get<SystemHealthResponse>('/system/health');
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {
@@ -347,7 +347,7 @@ export const systemApi = {
       const response = await apiClient.get<SystemHealthResponse>(`/system/health/${serviceName}`);
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {

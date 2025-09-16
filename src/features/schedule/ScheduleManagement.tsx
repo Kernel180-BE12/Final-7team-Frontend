@@ -56,7 +56,7 @@ export default function ScheduleManagement() {
       }
 
       // API 호출로 스케줄 등록
-      const response = await scheduleApi.createSchedule(schedule);
+      const response = await scheduleApi.createSchedule(schedule as any);
 
       if (response.success) {
         setSuccessMessage('schedule', response.message || "스케줄이 성공적으로 등록되었습니다.");
@@ -89,7 +89,7 @@ export default function ScheduleManagement() {
       const executeResponse = await pipelineApi.execute({
         keywordCount: schedule.keywordCount,
         publishCount: schedule.publishCount,
-        aiModel: schedule.aiModel,
+        aiModel: (schedule as any).aiModel,
         executeImmediately: true
       });
 
@@ -219,11 +219,11 @@ export default function ScheduleManagement() {
           </label>
           <select 
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
-            value={schedule.aiModel}
+            value={(schedule as any).aiModel}
             onChange={(e) =>
               updateScheduleSettings({
                 aiModel: e.target.value,
-              })
+              } as any)
             }
           >
             <option value="OpenAI GPT-4">OpenAI GPT-4</option>

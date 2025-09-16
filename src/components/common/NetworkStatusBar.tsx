@@ -1,4 +1,3 @@
-import { } from 'react';
 import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
 
 export function NetworkStatusBar() {

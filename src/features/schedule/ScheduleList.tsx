@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/store/uiStore";
 import { scheduleApi } from "@/lib/api";
-import type { ScheduleRequest, ScheduleListResponse } from "@/lib/types";
+import type { ScheduleRequest } from "@/lib/types";
 import { useState, useEffect } from "react";
 
 export default function ScheduleList() {
@@ -24,7 +24,7 @@ export default function ScheduleList() {
   // 페이징 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [, setTotalCount] = useState(0);
   const pageSize = 5; // 페이지당 표시할 스케줄 수
 
   // 스케줄 목록 조회 함수
@@ -46,9 +46,9 @@ export default function ScheduleList() {
         return;
       }
 
-      if (response.data && response.data.content && Array.isArray(response.data.content)) {
+      if (response.data && (response.data as any).content && Array.isArray((response.data as any).content)) {
         // API 응답의 data.content가 배열이므로 각 항목을 변환
-        const schedules = response.data.content.map((item: any) => ({
+        const schedules = (response.data as any).content.map((item: any) => ({
           scheduleId: item.scheduleId,
           executionCycle: item.executionCycle,
           executionTime: item.executionTime?.replace(/"/g, '') || '', // 따옴표 제거
@@ -60,11 +60,11 @@ export default function ScheduleList() {
         setScheduleList(schedules);
 
         // 백엔드에서 제공하는 페이징 정보 사용
-        setTotalCount(response.data.totalElements || 0);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setTotalCount((response.data as any).totalElements || 0);
+        setTotalPages((response.data as any).totalPages || 1);
+        setCurrentPage((response.data as any).currentPage || 1);
 
-        setSuccessMessage('schedule', `${schedules.length}개의 스케줄을 조회했습니다. (${response.data.currentPage}/${response.data.totalPages} 페이지)`);
+        setSuccessMessage('schedule', `${schedules.length}개의 스케줄을 조회했습니다. (${(response.data as any).currentPage}/${(response.data as any).totalPages} 페이지)`);
       } else {
         setScheduleList([]);
         setSuccessMessage('schedule', '등록된 스케줄이 없습니다.');
@@ -131,7 +131,7 @@ export default function ScheduleList() {
           <Button
             size="sm"
             variant="outline"
-            onClick={fetchScheduleList}
+            onClick={() => fetchScheduleList()}
             disabled={isLoading.schedule}
           >
             {isLoading.schedule ? '새로고침 중...' : '새로고침'}
@@ -164,7 +164,7 @@ export default function ScheduleList() {
         {/* 스케줄 목록 */}
         {!isLoading.schedule && scheduleList.length > 0 && (
           <div className="space-y-4">
-            {scheduleList.map((scheduleItem, index) => (
+            {scheduleList.map((scheduleItem) => (
               <div key={scheduleItem.scheduleId} className="p-4 bg-gray-50 rounded-lg border hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-semibold text-gray-800">스케줄 #{scheduleItem.scheduleId}</h3>

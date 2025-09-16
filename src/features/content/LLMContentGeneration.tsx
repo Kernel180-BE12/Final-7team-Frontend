@@ -64,7 +64,7 @@ export default function LLMContentGeneration({ compact = false }: LLMContentGene
   
   // 스케줄에서 설정된 AI 모델 가져오기
   const { schedule } = useAppStore()
-  const selectedModel = schedule.aiModel
+  const selectedModel = (schedule as any).aiModel
   
   // 파이프라인에서 콘텐츠 생성 데이터가 있으면 사용, 개발 환경이거나 데이터가 없으면 더미 데이터 사용
   const contentResult = pipelineData.stageResults.contentGeneration || null
