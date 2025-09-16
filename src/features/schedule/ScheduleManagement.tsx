@@ -11,17 +11,17 @@ import { EXECUTION_CYCLE_OPTIONS } from "@/lib/types";
 export default function ScheduleManagement() {
   // 앱 상태에서 스케줄 관련 데이터와 업데이트 함수 가져오기
   const { schedule, updateScheduleSettings } = useAppStore();
-  
+
   // UI 상태 관리 (로딩, 에러, 성공 메시지)
-  const { 
-    isLoading, 
-    errors, 
+  const {
+    isLoading,
+    errors,
     successMessages,
-    setLoading, 
-    setError, 
-    clearError, 
-    setSuccessMessage, 
-    clearSuccessMessage 
+    setLoading,
+    setError,
+    clearError,
+    setSuccessMessage,
+    clearSuccessMessage
   } = useUiStore();
 
   // 파이프라인 상태 관리
@@ -137,6 +137,7 @@ export default function ScheduleManagement() {
       <CardContent className="p-6 pt-0 space-y-4 flex-1 overflow-y-auto">
         {" "}
         {/* 카드 내용 영역, 각 필드 간 간격 */}
+
         {/* 실행 주기 선택 필드 */}
         <div>
           <label className="block mb-2 font-semibold text-gray-800 text-sm">
@@ -255,6 +256,7 @@ export default function ScheduleManagement() {
             {errors.pipeline}
           </div>
         )}
+
         
         {/* 버튼 그룹 */}
         <div className="space-y-3">
