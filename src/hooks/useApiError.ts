@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { ApiError } from '@/lib/api';
+import type { CustomApiError } from '@/lib/api';
 
 interface ApiErrorState {
   hasError: boolean;
-  error: ApiError | null;
+  error: CustomApiError | null;
   errorCount: number;
   lastErrorTime: Date | null;
 }
@@ -19,7 +19,7 @@ export function useApiError() {
   const [showGlobalError, setShowGlobalError] = useState(false);
 
   useEffect(() => {
-    const handleApiError = (event: CustomEvent<ApiError>) => {
+    const handleApiError = (event: CustomEvent<CustomApiError>) => {
       const error = event.detail;
       
       setState(prev => ({
@@ -82,13 +82,13 @@ export function useApiError() {
 
 // 컴포넌트별 API 오류 처리 훅
 export function useComponentApiError(componentName: string) {
-  const [localError, setLocalError] = useState<ApiError | null>(null);
+  const [localError, setLocalError] = useState<CustomApiError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleApiCall = async <T>(
     apiCall: () => Promise<T>,
     onSuccess?: (data: T) => void,
-    onError?: (error: ApiError) => void
+    onError?: (error: CustomApiError) => void
   ): Promise<T | null> => {
     setIsLoading(true);
     setLocalError(null);
@@ -98,7 +98,7 @@ export function useComponentApiError(componentName: string) {
       onSuccess?.(result);
       return result;
     } catch (error) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       setLocalError(apiError);
       onError?.(apiError);
       

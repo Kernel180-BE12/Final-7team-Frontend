@@ -52,13 +52,13 @@ export default function Sidebar() {
 
   const handleMenuClick = (item: MenuItem) => {
     setActiveNav(item.label);
-    // 모든 메뉴는 대시보드 내에서 콘텐츠 변경만
+    // 대시보드 내에서 컴포넌트 전환만
   };
 
   return (
-    <nav className="w-70 bg-gray-800 p-8 shadow-2xl">
+    <nav className="w-70 bg-gray-800 p-8 shadow-2xl sticky top-0 h-screen overflow-y-auto">
       {" "}
-      {/* 사이드바 네비게이션 */}
+      {/* 사이드바 네비게이션 - sticky로 고정 */}
       {/* 로고 영역 */}
       <div className="text-center mb-10">
         <h1 className="text-white text-xl font-bold mb-1">AI 콘텐츠</h1>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
+// import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
 
 interface UseAutoRetryOptions {
   maxRetries?: number;
@@ -19,7 +19,9 @@ export function useAutoRetry(
     enabled = true
   } = options;
 
-  const { isOnline, wasOffline } = useNetworkStatus();
+  // const { isOnline, wasOffline } = useNetworkStatus() as any;
+  const isOnline = true;
+  const wasOffline = false;
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
