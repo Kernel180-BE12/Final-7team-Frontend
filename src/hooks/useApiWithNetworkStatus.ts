@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useNetworkStatus } from '@/components/common/ApiErrorBoundary';
-import type { ApiError } from '@/lib/api';
+import type { CustomApiError } from '@/lib/api';
 
 interface UseApiWithNetworkStatusReturn<T> {
   data: T | null;
   loading: boolean;
-  error: ApiError | null;
+  error: CustomApiError | null;
   execute: () => Promise<T | null>;
   networkOffline: boolean;
 }
@@ -15,13 +15,13 @@ export function useApiWithNetworkStatus<T>(
 ): UseApiWithNetworkStatusReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [error, setError] = useState<CustomApiError | null>(null);
   const { isOnline } = useNetworkStatus();
 
   const execute = useCallback(async (): Promise<T | null> => {
     // 네트워크가 오프라인인 경우 즉시 에러 반환
     if (!isOnline) {
-      const networkError: ApiError = {
+      const networkError: CustomApiError = {
         message: '네트워크 연결을 확인해주세요. 인터넷에 연결되지 않았습니다.',
         isNetworkError: true,
         isTimeout: false,
@@ -39,7 +39,7 @@ export function useApiWithNetworkStatus<T>(
       setData(result);
       return result;
     } catch (err) {
-      const apiError = err as ApiError;
+      const apiError = err as CustomApiError;
       setError(apiError);
       return null;
     } finally {

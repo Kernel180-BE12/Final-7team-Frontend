@@ -4,6 +4,8 @@ import { LoginPage, RegisterPage } from "@/features/auth";
 import { AdminDashboard } from "@/features/dashboard";
 import MonitoringDashboard from "@/features/monitoring/MonitoringDashboard";
 import SystemLogs from "@/features/monitoring/SystemLogs";
+import ScheduleManagement from "@/features/schedule/ScheduleManagement";
+import ScheduleList from "@/features/schedule/ScheduleList";
 
 // 보호된 라우트 컴포넌트
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -79,7 +81,23 @@ export default function AppRouter() {
             </ProtectedRoute>
           }
         />
-        
+        <Route
+          path="/schedule"
+          element={
+            <ProtectedRoute>
+              <ScheduleManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/schedule/list"
+          element={
+            <ProtectedRoute>
+              <ScheduleList />
+            </ProtectedRoute>
+          }
+        />
+
         {/* 기본 리다이렉트 */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         

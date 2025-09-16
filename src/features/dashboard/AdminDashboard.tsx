@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAppStore } from "@/store/appStore";
 import Sidebar from "@/components/layout/Sidebar";
 import { ScheduleManagement } from "../schedule";
+import ScheduleList from "../schedule/ScheduleList";
 import { KeywordExtraction } from "../keyword";
 import { ProductSearchCrawling } from "../product";
 import { LLMContentGeneration } from "../content";
@@ -90,11 +91,18 @@ export default function AdminDashboard() {
               
             </>
           )}
-          {(activeNav === "스케줄 관리" || activeNav === "스케줄관리") && (
+          {(activeNav === "스케줄 등록" || activeNav === "스케줄관리") && (
             <div className="max-w-2xl mx-auto">
               {" "}
-              {/* 스케줄 관리 단독 표시 */}
+              {/* 스케줄 등록 단독 표시 */}
               <ScheduleManagement />
+            </div>
+          )}
+          {(activeNav === "스케줄 목록") && (
+            <div className="max-w-4xl mx-auto">
+              {" "}
+              {/* 스케줄 목록 단독 표시 */}
+              <ScheduleList />
             </div>
           )}
           {(activeNav === "키워드 추출" || activeNav === "키워드추출") && (
