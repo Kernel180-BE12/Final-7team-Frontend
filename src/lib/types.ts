@@ -87,20 +87,20 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
 ];
 
 // Schedule Types
-export type ExecutionCycle = "매일 실행" | "주간 실행" | "월간 실행";
+export type ScheduleType = "매일 실행" | "주간 실행" | "월간 실행";
 
-// ExecutionCycle 옵션들을 배열로 제공
-export const EXECUTION_CYCLE_OPTIONS: ExecutionCycle[] = [
+// ScheduleType 옵션들을 배열로 제공
+export const SCHEDULE_TYPE_OPTIONS: ScheduleType[] = [
   "매일 실행",
   "주간 실행",
   "월간 실행",
 ];
 
 export interface ScheduleRequest {
-  executionCycle: ExecutionCycle;
+  scheduleType: ScheduleType;
   executionTime: string;
   keywordCount: number;
-  publishCount: number;
+  contentCount: number;
   aiModel: string;
 }
 
@@ -110,10 +110,10 @@ export interface ScheduleResponse {
   scheduleId?: number;
   data?: {
     scheduleId: number;
-    executionCycle: ExecutionCycle;
+    scheduleType: ScheduleType;
     executionTime: string;
     keywordCount: number;
-    publishCount: number;
+    contentCount: number;
     aiModel: string;
     isActive: boolean;
     createdAt: string;
@@ -127,10 +127,10 @@ export interface ScheduleListResponse {
   message: string;
   data?: Array<{
     scheduleId: number;
-    executionCycle: ExecutionCycle;
+    scheduleType: ScheduleType;
     executionTime: string;
     keywordCount: number;
-    publishCount: number;
+    contentCount: number;
     aiModel: string;
     isActive: boolean;
     createdAt: string;
@@ -181,7 +181,7 @@ export interface User {
 // Pipeline Types
 export interface PipelineConfig {
   keywordCount: number;
-  publishCount: number;
+  contentCount: number;
   contentType: "blog" | "review" | "description";
   platforms: Array<"naver" | "coupang" | "11st" | "gmarket">;
   publishTargets: Array<"blog" | "social" | "website">;
@@ -189,7 +189,7 @@ export interface PipelineConfig {
 
 export interface PipelineExecuteRequest {
   keywordCount: number;
-  publishCount: number;
+  contentCount: number;
   aiModel: string;
   executeImmediately?: boolean;
 }
