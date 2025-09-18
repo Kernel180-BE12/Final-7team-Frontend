@@ -50,10 +50,10 @@ export default function ScheduleList() {
         // API 응답의 data.content가 배열이므로 각 항목을 변환
         const schedules = (response.data as any).content.map((item: any) => ({
           scheduleId: item.scheduleId,
-          executionCycle: item.executionCycle,
+          scheduleType: item.scheduleType,
           executionTime: item.executionTime?.replace(/"/g, '') || '', // 따옴표 제거
           keywordCount: item.keywordCount || 0,
-          publishCount: item.publishCount || 0,
+          contentCount: item.contentCount || 0,
           aiModel: item.aiModel || '알 수 없음'
         }));
 
@@ -181,7 +181,7 @@ export default function ScheduleList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">실행 주기:</span>
-                    <span className="font-medium">{scheduleItem.executionCycle}</span>
+                    <span className="font-medium">{scheduleItem.scheduleType}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">실행 시간:</span>
@@ -192,8 +192,8 @@ export default function ScheduleList() {
                     <span className="font-medium">{scheduleItem.keywordCount}개</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">발행 수:</span>
-                    <span className="font-medium">{scheduleItem.publishCount}개</span>
+                    <span className="text-gray-600">콘텐츠 수:</span>
+                    <span className="font-medium">{scheduleItem.contentCount}개</span>
                   </div>
                   <div className="flex justify-between md:col-span-2">
                     <span className="text-gray-600">AI 모델:</span>
