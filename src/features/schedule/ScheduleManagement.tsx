@@ -5,8 +5,8 @@ import { useAppStore } from "@/store/appStore";
 import { useUiStore } from "@/store/uiStore";
 import { usePipelineStore } from "@/store/pipelineStore";
 import { scheduleApi, pipelineApi } from "@/lib/api";
-import type { ExecutionCycle } from "@/lib/types";
-import { EXECUTION_CYCLE_OPTIONS } from "@/lib/types";
+import type { ScheduleType } from "@/lib/types";
+import { SCHEDULE_TYPE_OPTIONS } from "@/lib/types";
 
 export default function ScheduleManagement() {
   // 앱 상태에서 스케줄 관련 데이터와 업데이트 함수 가져오기
@@ -35,8 +35,8 @@ export default function ScheduleManagement() {
     if (schedule.keywordCount <= 0 || schedule.keywordCount > 1000) {
       return "키워드 추출 개수는 1~1000 사이여야 합니다.";
     }
-    if (schedule.publishCount <= 0 || schedule.publishCount > 100) {
-      return "발행 개수는 1~100 사이여야 합니다.";
+    if (schedule.contentCount <= 0 || schedule.contentCount > 100) {
+      return "콘텐츠 개수는 1~100 사이여야 합니다.";
     }
     return null; // 검증 통과
   };
@@ -88,7 +88,7 @@ export default function ScheduleManagement() {
       // 파이프라인 실행 요청
       const executeResponse = await pipelineApi.execute({
         keywordCount: schedule.keywordCount,
-        publishCount: schedule.publishCount,
+        contentCount: schedule.contentCount,
         aiModel: (schedule as any).aiModel,
         executeImmediately: true
       });
@@ -145,14 +145,14 @@ export default function ScheduleManagement() {
           </label>
           <select
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
-            value={schedule.executionCycle}
+            value={schedule.scheduleType}
             onChange={(e) =>
               updateScheduleSettings({
-                executionCycle: e.target.value as ExecutionCycle,
+                scheduleType: e.target.value as ScheduleType,
               })
             } // 실행 주기 변경 시 상태 업데이트
           >
-            {EXECUTION_CYCLE_OPTIONS.map((option) => (
+            {SCHEDULE_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -195,17 +195,17 @@ export default function ScheduleManagement() {
         {/* 발행 개수 설정 필드 */}
         <div>
           <label className="block mb-2 font-semibold text-gray-800 text-sm">
-            발행 개수
+            콘텐츠 개수
           </label>
           <input
             type="number"
             min="1"
             max="100"
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
-            value={schedule.publishCount}
+            value={schedule.contentCount}
             onChange={(e) =>
               updateScheduleSettings({
-                publishCount: parseInt(e.target.value) || 0,
+                contentCount: parseInt(e.target.value) || 0,
               })
             } // 숫자로 변환하여 상태 업데이트 (빈 값일 때 0)
             placeholder="생성할 콘텐츠 수 (1-100)"

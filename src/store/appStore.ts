@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import type { ExecutionCycle } from '@/lib/types'
+import type { ScheduleType } from '@/lib/types'
 
 // 스케줄 설정 타입 (실제 사용 중)
 export interface ScheduleSettings {
-  executionCycle: ExecutionCycle
+  scheduleType: ScheduleType
   executionTime: string
   keywordCount: number
-  publishCount: number
+  contentCount: number
   aiModel: string
 }
 
@@ -27,10 +27,10 @@ export const useAppStore = create<AppState>((set) => ({
   
   // 스케줄 초기값
   schedule: {
-    executionCycle: '매일 실행',
+    scheduleType: '매일 실행',
     executionTime: '08:00',
     keywordCount: 50,
-    publishCount: 1,
+    contentCount: 1,
     aiModel: 'GPT-4',
   },
 
