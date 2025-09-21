@@ -26,8 +26,6 @@ export default function ProductSearchCrawling() {
   // 파이프라인 데이터 가져오기
   const pipelineData = usePipelineData()
   
-  // 디버깅용 로그 (임시)
-  console.log('ProductSearchCrawling - pipelineData:', pipelineData)
   
   // 파이프라인에서 상품 크롤링 데이터가 있으면 사용, 없으면 더미 데이터 사용
   const productResults = Array.isArray(pipelineData.stageResults.productCrawling) 
@@ -69,7 +67,7 @@ export default function ProductSearchCrawling() {
   }
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center">
           <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center text-white text-xl mr-4">
@@ -78,7 +76,7 @@ export default function ProductSearchCrawling() {
           상품 검색 & 크롤링
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 pt-0 flex-1 overflow-y-auto">
         <div className="mb-4">
           <div className="font-medium">타겟 사이트: {productSearch.targetSite}</div>
           <div className="text-sm text-gray-600">{getStatusMessage()}</div>

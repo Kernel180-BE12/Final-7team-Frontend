@@ -3,6 +3,7 @@ import type {
   MenuApiResponse,
   ScheduleRequest,
   ScheduleResponse,
+  ScheduleListResponse,
   LoginRequest,
   RegisterRequest,
   AuthResponse,
@@ -16,16 +17,6 @@ import type {
   SystemHealthResponse,
 } from "./types";
 
-// API 에러 타입 정의
-interface ApiError {
-  isNotImplemented?: boolean;
-  message?: string;
-  data?: unknown;
-  response?: {
-    status: number;
-    data: unknown;
-  };
-}
 
 // API 클라이언트 설정
 const apiClient = axios.create({
@@ -36,27 +27,77 @@ const apiClient = axios.create({
   },
 });
 
-// 응답 인터셉터 - 404 에러 처리
+// API 오류 타입 정의
+export interface CustomApiError {
+  message: string;
+  status?: number;
+  isNetworkError?: boolean;
+  isTimeout?: boolean;
+  isServerError?: boolean;
+  isNotImplemented?: boolean;
+}
+
+// API 응답 인터셉터 - 오류 처리
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
-    // axios 에러인지 확인하는 타입 가드
-    const isAxiosError = (err: unknown): err is { response?: { status: number }; config?: { url: string } } => {
-      return typeof err === 'object' && err !== null && 'response' in err;
+  (error) => {
+    const apiError: CustomApiError = {
+      message: '알 수 없는 오류가 발생했습니다.',
+      isNetworkError: false,
+      isTimeout: false,
+      isServerError: false,
     };
 
-    if (isAxiosError(error) && error.response?.status === 404) {
-      console.warn(`API 엔드포인트가 구현되지 않음: ${error.config?.url}`);
-      // 404 에러를 특별한 형태로 변환
-      return Promise.reject({
-        ...error,
-        isNotImplemented: true,
-        message: "해당 기능이 아직 구현되지 않았습니다."
-      } as ApiError);
+    if (error.code === 'ECONNABORTED') {
+      // 타임아웃 오류
+      apiError.message = 'API 요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.';
+      apiError.isTimeout = true;
+    } else if (error.code === 'ERR_NETWORK' || !error.response) {
+      // 네트워크 오류 (서버 연결 불가)
+      apiError.message = 'API 서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.';
+      apiError.isNetworkError = true;
+    } else if (error.response) {
+      // 서버 응답이 있는 경우
+      const status = error.response.status;
+      apiError.status = status;
+
+      if (status >= 500) {
+        apiError.message = `서버 내부 오류가 발생했습니다. (${status})`;
+        apiError.isServerError = true;
+      } else if (status === 404) {
+        console.warn(`API 엔드포인트가 구현되지 않음: ${error.config?.url}`);
+        apiError.message = '해당 기능이 아직 구현되지 않았습니다.';
+        // 404는 구현되지 않은 API로 처리
+        apiError.isNotImplemented = true;
+        return Promise.reject(apiError);
+      } else if (status === 401) {
+        apiError.message = '인증이 필요합니다. 다시 로그인해주세요.';
+      } else if (status === 403) {
+        apiError.message = '접근 권한이 없습니다.';
+      } else {
+        apiError.message = error.response.data?.message || `API 오류가 발생했습니다. (${status})`;
+      }
     }
-    return Promise.reject(error);
+
+    // 전역 오류 이벤트 발생
+    window.dispatchEvent(new CustomEvent('api-error', { 
+      detail: apiError 
+    }));
+
+    return Promise.reject(apiError);
   }
 );
+
+// API 연결 상태 체크 함수
+export const checkApiConnection = async (): Promise<boolean> => {
+  try {
+    await apiClient.get('/health', { timeout: 3000 });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 
 // API 함수들
 export const menuApi = {
@@ -94,9 +135,12 @@ export const scheduleApi = {
     return response.data;
   },
 
-  // 스케줄 조회 API
-  getSchedules: async (): Promise<ScheduleRequest[]> => {
-    const response = await apiClient.get<ScheduleRequest[]>("/schedule");
+  // 스케줄 목록 조회 API
+  getSchedules: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ScheduleListResponse> => {
+    const response = await apiClient.get<ScheduleListResponse>("/schedule/list", { params });
     return response.data;
   },
 
@@ -179,6 +223,12 @@ export const pipelineApi = {
     return response.data;
   },
 
+  // 전체 실행 목록 조회
+  getAllExecutions: async (): Promise<PipelineStatusResponse[]> => {
+    const response = await apiClient.get<PipelineStatusResponse[]>("/pipeline/executions");
+    return response.data;
+  },
+
   // 파이프라인 제어 (일시정지/재개/중단)
   control: async (
     executionId: number,
@@ -204,7 +254,7 @@ export const pipelineApi = {
       );
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {
@@ -268,7 +318,7 @@ export const systemApi = {
       const response = await apiClient.get<SystemHealthResponse>('/system/health');
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {
@@ -297,7 +347,7 @@ export const systemApi = {
       const response = await apiClient.get<SystemHealthResponse>(`/system/health/${serviceName}`);
       return response.data;
     } catch (error: unknown) {
-      const apiError = error as ApiError;
+      const apiError = error as CustomApiError;
       if (apiError.isNotImplemented) {
         // 백엔드 미구현 시 임시 데이터 반환
         return {

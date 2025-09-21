@@ -5,23 +5,23 @@ import { useAppStore } from "@/store/appStore";
 import { useUiStore } from "@/store/uiStore";
 import { usePipelineStore } from "@/store/pipelineStore";
 import { scheduleApi, pipelineApi } from "@/lib/api";
-import type { ExecutionCycle } from "@/lib/types";
-import { EXECUTION_CYCLE_OPTIONS } from "@/lib/types";
+import type { ScheduleType } from "@/lib/types";
+import { SCHEDULE_TYPE_OPTIONS } from "@/lib/types";
 
 export default function ScheduleManagement() {
   // 앱 상태에서 스케줄 관련 데이터와 업데이트 함수 가져오기
   const { schedule, updateScheduleSettings } = useAppStore();
-  
+
   // UI 상태 관리 (로딩, 에러, 성공 메시지)
-  const { 
-    isLoading, 
-    errors, 
+  const {
+    isLoading,
+    errors,
     successMessages,
-    setLoading, 
-    setError, 
-    clearError, 
-    setSuccessMessage, 
-    clearSuccessMessage 
+    setLoading,
+    setError,
+    clearError,
+    setSuccessMessage,
+    clearSuccessMessage
   } = useUiStore();
 
   // 파이프라인 상태 관리
@@ -35,8 +35,8 @@ export default function ScheduleManagement() {
     if (schedule.keywordCount <= 0 || schedule.keywordCount > 1000) {
       return "키워드 추출 개수는 1~1000 사이여야 합니다.";
     }
-    if (schedule.publishCount <= 0 || schedule.publishCount > 100) {
-      return "발행 개수는 1~100 사이여야 합니다.";
+    if (schedule.contentCount <= 0 || schedule.contentCount > 100) {
+      return "콘텐츠 개수는 1~100 사이여야 합니다.";
     }
     return null; // 검증 통과
   };
@@ -56,7 +56,7 @@ export default function ScheduleManagement() {
       }
 
       // API 호출로 스케줄 등록
-      const response = await scheduleApi.createSchedule(schedule);
+      const response = await scheduleApi.createSchedule(schedule as any);
 
       if (response.success) {
         setSuccessMessage('schedule', response.message || "스케줄이 성공적으로 등록되었습니다.");
@@ -88,7 +88,8 @@ export default function ScheduleManagement() {
       // 파이프라인 실행 요청
       const executeResponse = await pipelineApi.execute({
         keywordCount: schedule.keywordCount,
-        publishCount: schedule.publishCount,
+        contentCount: schedule.contentCount,
+        aiModel: (schedule as any).aiModel,
         executeImmediately: true
       });
 
@@ -121,7 +122,7 @@ export default function ScheduleManagement() {
   };
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
       {" "}
       {/* 호버 시 그림자 및 이동 효과가 있는 카드 */}
       <CardHeader>
@@ -133,9 +134,10 @@ export default function ScheduleManagement() {
           스케줄 관리
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-6 pt-0 space-y-4 flex-1 overflow-y-auto">
         {" "}
         {/* 카드 내용 영역, 각 필드 간 간격 */}
+
         {/* 실행 주기 선택 필드 */}
         <div>
           <label className="block mb-2 font-semibold text-gray-800 text-sm">
@@ -143,14 +145,14 @@ export default function ScheduleManagement() {
           </label>
           <select
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
-            value={schedule.executionCycle}
+            value={schedule.scheduleType}
             onChange={(e) =>
               updateScheduleSettings({
-                executionCycle: e.target.value as ExecutionCycle,
+                scheduleType: e.target.value as ScheduleType,
               })
             } // 실행 주기 변경 시 상태 업데이트
           >
-            {EXECUTION_CYCLE_OPTIONS.map((option) => (
+            {SCHEDULE_TYPE_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -193,22 +195,43 @@ export default function ScheduleManagement() {
         {/* 발행 개수 설정 필드 */}
         <div>
           <label className="block mb-2 font-semibold text-gray-800 text-sm">
-            발행 개수
+            콘텐츠 개수
           </label>
           <input
             type="number"
             min="1"
             max="100"
             className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
-            value={schedule.publishCount}
+            value={schedule.contentCount}
             onChange={(e) =>
               updateScheduleSettings({
-                publishCount: parseInt(e.target.value) || 0,
+                contentCount: parseInt(e.target.value) || 0,
               })
             } // 숫자로 변환하여 상태 업데이트 (빈 값일 때 0)
             placeholder="생성할 콘텐츠 수 (1-100)"
           />
         </div>
+        
+        {/* AI 모델 선택 필드 */}
+        <div>
+          <label className="block mb-2 font-semibold text-gray-800 text-sm">
+            AI 모델 선택
+          </label>
+          <select 
+            className="w-full p-3 border-2 border-gray-200 rounded-lg text-sm transition-all duration-300 bg-white focus:outline-none focus:border-gray-600"
+            value={(schedule as any).aiModel}
+            onChange={(e) =>
+              updateScheduleSettings({
+                aiModel: e.target.value,
+              } as any)
+            }
+          >
+            <option value="OpenAI GPT-4">OpenAI GPT-4</option>
+            <option value="Google Gemini">Google Gemini</option>
+            <option value="Claude 3.5">Claude 3.5</option>
+          </select>
+        </div>
+        
         {/* 메시지 표시 영역 */}
         {successMessages.schedule && (
           <div className="p-3 rounded-lg text-sm bg-green-50 text-green-700 border border-green-200">
@@ -233,6 +256,7 @@ export default function ScheduleManagement() {
             {errors.pipeline}
           </div>
         )}
+
         
         {/* 버튼 그룹 */}
         <div className="space-y-3">
