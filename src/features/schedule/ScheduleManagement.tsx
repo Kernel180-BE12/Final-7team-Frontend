@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/appStore";
 import { useUiStore } from "@/store/uiStore";
 import { usePipelineStore } from "@/store/pipelineStore";
-import { scheduleApi, pipelineApi } from "@/lib/api";
+import { scheduleApi } from "@/lib/api";
 import type { ScheduleType } from "@/lib/types";
 import { SCHEDULE_TYPE_OPTIONS } from "@/lib/types";
 
@@ -56,7 +56,10 @@ export default function ScheduleManagement() {
       }
 
       // API 호출로 스케줄 등록
-      const response = await scheduleApi.createSchedule(schedule as any);
+      const response = await scheduleApi.createSchedule({
+        ...schedule,
+        executeImmediately: false
+      });
 
       if (response.success) {
         setSuccessMessage('schedule', response.message || "스케줄이 성공적으로 등록되었습니다.");
@@ -85,15 +88,13 @@ export default function ScheduleManagement() {
         return;
       }
 
-      // 파이프라인 실행 요청
-      const executeResponse = await pipelineApi.execute({
-        keywordCount: schedule.keywordCount,
-        contentCount: schedule.contentCount,
-        aiModel: (schedule as any).aiModel,
+      // 즉시 실행을 위한 스케줄 등록 요청
+      const executeResponse = await scheduleApi.createSchedule({
+        ...schedule,
         executeImmediately: true
       });
 
-      if (executeResponse.success && executeResponse.data) {
+      if (executeResponse.success && executeResponse.data?.executionId) {
         // 실행된 파이프라인을 활성 실행 목록에 추가
         setActiveExecution(executeResponse.data.executionId, {
           executionId: executeResponse.data.executionId,
@@ -110,6 +111,8 @@ export default function ScheduleManagement() {
         });
 
         setSuccessMessage('pipeline', `파이프라인 실행이 시작되었습니다. (실행 ID: ${executeResponse.data.executionId})`);
+      } else if (executeResponse.success) {
+        setSuccessMessage('pipeline', executeResponse.message || "스케줄이 성공적으로 등록되었습니다.");
       } else {
         setError('pipeline', executeResponse.message || "파이프라인 실행에 실패했습니다.");
       }

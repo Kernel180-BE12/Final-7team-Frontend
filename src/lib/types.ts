@@ -102,6 +102,7 @@ export interface ScheduleRequest {
   keywordCount: number;
   contentCount: number;
   aiModel: string;
+  executeImmediately?: boolean;
 }
 
 export interface ScheduleResponse {
@@ -118,6 +119,7 @@ export interface ScheduleResponse {
     isActive: boolean;
     createdAt: string;
     nextExecutionAt: string;
+    executionId?: number; // 즉시 실행 시에만 포함
   };
 }
 
