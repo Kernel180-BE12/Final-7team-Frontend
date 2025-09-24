@@ -70,37 +70,15 @@ export default function SystemStatus() {
     }
   };
 
-  // 개발환경에서 샘플 데이터 사용
+  // 시스템 상태 조회
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      // 개발환경에서는 샘플 데이터 사용
-      const sampleData: SystemHealthResponse = {
-        success: true,
-        data: {
-          status: "healthy",
-          services: {
-            database: "up",
-            llm: "up",
-            crawler: "down",
-            scheduler: "degraded",
-          },
-          version: "1.0.0",
-          lastChecked: new Date().toISOString(),
-        },
-      };
-      setSystemHealth(sampleData);
-      setIsLoading(false);
-    } else {
-      fetchSystemHealth();
-    }
+    fetchSystemHealth();
   }, []);
 
   // 5초마다 자동 새로고침
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!import.meta.env.DEV) {
-        fetchSystemHealth();
-      }
+      fetchSystemHealth();
     }, 5000);
 
     return () => clearInterval(interval);
@@ -190,9 +168,8 @@ export default function SystemStatus() {
             </div>
             <div className="text-right">
               <button
-                onClick={() => !import.meta.env.DEV && fetchSystemHealth()}
+                onClick={() => fetchSystemHealth()}
                 className="mb-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                disabled={import.meta.env.DEV}
               >
                 새로고침
               </button>

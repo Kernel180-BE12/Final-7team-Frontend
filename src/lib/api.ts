@@ -91,7 +91,7 @@ apiClient.interceptors.response.use(
 // API 연결 상태 체크 함수
 export const checkApiConnection = async (): Promise<boolean> => {
   try {
-    await apiClient.get('/health', { timeout: 3000 });
+    await apiClient.get('/system/health', { timeout: 3000 });
     return true;
   } catch {
     return false;
