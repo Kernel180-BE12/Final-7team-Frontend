@@ -7,8 +7,6 @@ import type {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
-  PipelineExecuteRequest,
-  PipelineExecuteResponse,
   PipelineStatusResponse,
   PipelineControlRequest,
   PipelineControlResponse,
@@ -209,15 +207,6 @@ export const authApi = {
 };
 
 export const pipelineApi = {
-  // 파이프라인 실행
-  execute: async (data: PipelineExecuteRequest): Promise<PipelineExecuteResponse> => {
-    const response = await apiClient.post<PipelineExecuteResponse>(
-      "/pipeline/execute",
-      data
-    );
-    return response.data;
-  },
-
   // 파이프라인 상태 조회
   getStatus: async (executionId: number): Promise<PipelineStatusResponse> => {
     const response = await apiClient.get<PipelineStatusResponse>(
