@@ -15,6 +15,8 @@ import type {
   PipelineHistoryResponse,
   PipelineResultResponse,
   SystemHealthResponse,
+  JobLogFilter,
+  JobLogsResponse,
 } from "./types";
 
 
@@ -368,6 +370,25 @@ export const systemApi = {
       }
       throw error;
     }
+  },
+};
+
+// Job Logs API
+export const logsApi = {
+  // 작업 로그 조회 API
+  getJobLogs: async (filter: JobLogFilter): Promise<JobLogsResponse> => {
+    const params = {
+      executionId: filter.executionId,
+      ...(filter.startDate && { startDate: filter.startDate }),
+      ...(filter.endDate && { endDate: filter.endDate }),
+      ...(filter.status && filter.status !== 'all' && { status: filter.status }),
+      ...(filter.level && filter.level !== 'ALL' && { level: filter.level }),
+      page: filter.page || 1,
+      size: filter.size || 20,
+    };
+
+    const response = await apiClient.get<JobLogsResponse>('/monitoring/logs', { params });
+    return response.data;
   },
 };
 

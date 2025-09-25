@@ -1,27 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface JobLog {
-  log_id: string;
-  execution_id: string;
-  step_code: string | null;
-  source_table: string | null;
-  source_id: string | null;
-  business_key: string | null;
-  log_category: string;
-  log_level: "DEBUG" | "INFO" | "WARN" | "ERROR";
-  status_code: "SUCCESS" | "FAILURE" | "RUNNING";
-  log_message: string;
-  created_at: string;
-}
-
-interface JobLogFilter {
-  executionId: string;
-  startDate: string;
-  endDate: string;
-  status: "all" | "SUCCESS" | "FAILURE" | "RUNNING";
-  level: "DEBUG" | "INFO" | "WARN" | "ERROR" | "ALL";
-}
+import { logsApi } from "@/lib/api";
+import type { JobLog, JobLogFilter } from "@/lib/types";
 
 export default function SystemLogs() {
   const [logs, setLogs] = useState<JobLog[]>([]);
@@ -36,7 +16,7 @@ export default function SystemLogs() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const searchLogs = () => {
+  const searchLogs = async () => {
     if (!filter.executionId.trim()) {
       alert("실행 ID를 입력해주세요.");
       return;
@@ -44,107 +24,32 @@ export default function SystemLogs() {
 
     setIsLoading(true);
 
-    // 개발 모드용 샘플 데이터
-    if (import.meta.env.DEV) {
-      setTimeout(() => {
-        // 2001 실행 ID로 고정된 샘플 데이터 (filter.executionId와 관계없이)
-        const sampleLogs: JobLog[] = [
-          {
-            log_id: "10001",
-            execution_id: "2001",
-            step_code: null,
-            source_table: null,
-            source_id: null,
-            business_key: null,
-            log_category: "DAILY_WORKFLOW",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "일일 콘텐츠 생성 워크플로우 시작",
-            created_at: "2025-09-13 09:00:00",
-          },
-          {
-            log_id: "10002",
-            execution_id: "2001",
-            step_code: "F-002",
-            source_table: "trend_data",
-            source_id: "301",
-            business_key: "AI 쇼핑",
-            log_category: "BUSINESS",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "키워드 추출 완료: AI 쇼핑 (점수: 95)",
-            created_at: "2025-09-13 09:00:30",
-          },
-          {
-            log_id: "10003",
-            execution_id: "2001",
-            step_code: "F-003",
-            source_table: null,
-            source_id: null,
-            business_key: "AI 쇼핑",
-            log_category: "BUSINESS",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "상품 검색 완료: 25개 상품 발견, 1개 선택",
-            created_at: "2025-09-13 09:01:00",
-          },
-          {
-            log_id: "10004",
-            execution_id: "2001",
-            step_code: "F-004",
-            source_table: null,
-            source_id: null,
-            business_key: "AI 쇼핑",
-            log_category: "BUSINESS",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "상품 크롤링 완료: 제목 및 상세정보 추출",
-            created_at: "2025-09-13 09:01:15",
-          },
-          {
-            log_id: "10005",
-            execution_id: "2001",
-            step_code: "F-005",
-            source_table: "ai_content",
-            source_id: "501",
-            business_key: "AI 쇼핑",
-            log_category: "BUSINESS",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "AI 콘텐츠 생성 완료 (품질점수: 87)",
-            created_at: "2025-09-13 09:02:00",
-          },
-          {
-            log_id: "10006",
-            execution_id: "2001",
-            step_code: "F-006",
-            source_table: "publish_log",
-            source_id: "701",
-            business_key: "AI 쇼핑",
-            log_category: "BUSINESS",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "네이버 블로그 발행 완료",
-            created_at: "2025-09-13 09:02:30",
-          },
-          {
-            log_id: "10007",
-            execution_id: "2001",
-            step_code: null,
-            source_table: null,
-            source_id: null,
-            business_key: null,
-            log_category: "DAILY_WORKFLOW",
-            log_level: "INFO",
-            status_code: "SUCCESS",
-            log_message: "일일 콘텐츠 생성 워크플로우 완료",
-            created_at: "2025-09-13 09:02:35",
-          },
-        ];
-        setLogs(sampleLogs);
+    try {
+      const response = await logsApi.getJobLogs({
+        executionId: filter.executionId,
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+        status: filter.status,
+        level: filter.level,
+        page: currentPage,
+        size: 20
+      });
+
+      if (response.success && response.data) {
+        setLogs(response.data.logs);
+        setTotalPages(response.data.pagination.totalPages);
+      } else {
+        alert(response.message || "로그 조회에 실패했습니다.");
+        setLogs([]);
         setTotalPages(1);
-        setIsLoading(false);
-      }, 1000);
+      }
+    } catch (error) {
+      console.error('로그 조회 오류:', error);
+      alert("로그 조회 중 오류가 발생했습니다.");
+      setLogs([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,7 +158,7 @@ export default function SystemLogs() {
               <div>
                 <label className="block text-sm font-medium mb-2">시작일</label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={filter.startDate}
                   onChange={(e) => setFilter(prev => ({ ...prev, startDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -263,7 +168,7 @@ export default function SystemLogs() {
               <div>
                 <label className="block text-sm font-medium mb-2">종료일</label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   value={filter.endDate}
                   onChange={(e) => setFilter(prev => ({ ...prev, endDate: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -318,6 +223,8 @@ export default function SystemLogs() {
                     level: "ALL",
                   });
                   setLogs([]);
+                  setCurrentPage(1);
+                  setTotalPages(1);
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
               >
@@ -435,7 +342,13 @@ export default function SystemLogs() {
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => {
+                  setCurrentPage(i + 1);
+                  // 페이지 변경 시 자동으로 재조회
+                  if (filter.executionId.trim()) {
+                    searchLogs();
+                  }
+                }}
                 className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
                   currentPage === i + 1
                     ? "bg-blue-600 text-white"
