@@ -601,4 +601,43 @@ export interface MonitoringOverview {
   };
 }
 
+// Job Log Types (for /v1/monitoring/logs API)
+export interface JobLog {
+  log_id: string;
+  execution_id: string;
+  step_code: string | null;
+  source_table: string | null;
+  source_id: string | null;
+  business_key: string | null;
+  log_category: string;
+  log_level: "DEBUG" | "INFO" | "WARN" | "ERROR";
+  status_code: "SUCCESS" | "FAILURE" | "RUNNING";
+  log_message: string;
+  created_at: string;
+}
+
+export interface JobLogFilter {
+  executionId: string;
+  startDate?: string;
+  endDate?: string;
+  status?: "all" | "SUCCESS" | "FAILURE" | "RUNNING";
+  level?: "DEBUG" | "INFO" | "WARN" | "ERROR" | "ALL";
+  page?: number;
+  size?: number;
+}
+
+export interface JobLogsResponse {
+  success: boolean;
+  data: {
+    logs: JobLog[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      pageSize: number;
+    };
+  };
+  message?: string;
+}
+
 // 추후 다른 API 타입들도 여기에 추가
