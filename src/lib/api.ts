@@ -17,6 +17,7 @@ import type {
   SystemHealthResponse,
   JobLogFilter,
   JobLogsResponse,
+  MonitoringStatusResponse,
 } from "./types";
 
 
@@ -388,6 +389,15 @@ export const logsApi = {
     };
 
     const response = await apiClient.get<JobLogsResponse>('/monitoring/logs', { params });
+    return response.data;
+  },
+};
+
+// Monitoring API
+export const monitoringApi = {
+  // 모니터링 통계 조회 API
+  getStats: async (): Promise<MonitoringStatusResponse> => {
+    const response = await apiClient.get<MonitoringStatusResponse>('/monitoring/stats');
     return response.data;
   },
 };
