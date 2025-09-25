@@ -640,4 +640,26 @@ export interface JobLogsResponse {
   message?: string;
 }
 
+// Monitoring Status Types (for /v1/monitoring/status API)
+export interface MonitoringStatus {
+  successCount: number;
+  failureCount: number;
+  successRate: number;
+  recentActivities: Array<{
+    id: string;
+    title: string;
+    description: string;
+    type: 'success' | 'failure' | 'pending' | 'running';
+    timestamp: string;
+  }>;
+  totalExecutions: number;
+  activeExecutions: number;
+}
+
+export interface MonitoringStatusResponse {
+  success: boolean;
+  data: MonitoringStatus;
+  message?: string;
+}
+
 // 추후 다른 API 타입들도 여기에 추가
