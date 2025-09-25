@@ -28,7 +28,7 @@ export default function ScheduleList() {
   const pageSize = 5; // 페이지당 표시할 스케줄 수
 
   // 스케줄 목록 조회 함수
-  const fetchScheduleList = async (page: number = currentPage) => {
+  const fetchScheduleList = async (page: number = 1) => {
     try {
       setLoading('schedule', true);
       clearError('schedule');
@@ -62,12 +62,12 @@ export default function ScheduleList() {
         // 백엔드에서 제공하는 페이징 정보 사용
         setTotalCount((response.data as any).totalElements || 0);
         setTotalPages((response.data as any).totalPages || 1);
-        setCurrentPage((response.data as any).currentPage || 1);
+        setCurrentPage(page); // 요청한 페이지 번호를 직접 설정
 
-        setSuccessMessage('schedule', `${schedules.length}개의 스케줄을 조회했습니다. (${(response.data as any).currentPage}/${(response.data as any).totalPages} 페이지)`);
+        // 성공 메시지 제거
       } else {
         setScheduleList([]);
-        setSuccessMessage('schedule', '등록된 스케줄이 없습니다.');
+        // 비어있을 때도 메시지 제거
       }
     } catch (error) {
       console.error("스케줄 조회 에러:", error);
@@ -91,8 +91,8 @@ export default function ScheduleList() {
 
       if (response.success) {
         setSuccessMessage('schedule', '스케줄이 성공적으로 삭제되었습니다.');
-        // 삭제 후 목록 새로고침
-        fetchScheduleList();
+        // 삭제 후 현재 페이지로 목록 새로고침
+        fetchScheduleList(currentPage);
       } else {
         setError('schedule', response.message || '스케줄 삭제에 실패했습니다.');
       }
@@ -109,6 +109,17 @@ export default function ScheduleList() {
     if (page !== currentPage && page >= 1 && page <= totalPages) {
       fetchScheduleList(page);
     }
+  };
+
+  // 페이지 버튼 그룹 계산 (한 번에 5개씩 표시)
+  const getPageButtonsToShow = () => {
+    const maxButtonsToShow = 5;
+    const safeCurrentPage = Math.max(1, Math.min(currentPage, totalPages));
+    const currentGroup = Math.ceil(safeCurrentPage / maxButtonsToShow);
+    const startPage = (currentGroup - 1) * maxButtonsToShow + 1;
+    const endPage = Math.min(startPage + maxButtonsToShow - 1, totalPages);
+
+    return Array.from({ length: Math.max(0, endPage - startPage + 1) }, (_, i) => startPage + i);
   };
 
   // 컴포넌트 마운트 시 스케줄 목록 조회
@@ -226,35 +237,66 @@ export default function ScheduleList() {
 
         {/* 페이징 */}
         {totalPages > 1 && (
-          <div className="mt-6 flex justify-center gap-2">
+          <div className="mt-6 flex justify-center items-center gap-2">
+            {/* 첫 페이지로 */}
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 rounded text-sm font-medium transition-colors bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ««
+            </button>
+
+            {/* 이전 */}
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="px-3 py-2 rounded text-sm font-medium transition-colors bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              이전
+              «
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => (
+            {/* 생략 표시 (첫 그룹이 아닌 경우) */}
+            {getPageButtonsToShow()[0] > 1 && (
+              <span className="px-2 text-gray-500 text-sm">...</span>
+            )}
+
+            {/* 페이지 번호들 */}
+            {getPageButtonsToShow().map(pageNum => (
               <button
-                key={i + 1}
-                onClick={() => handlePageChange(i + 1)}
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
                 className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                  currentPage === i + 1
+                  currentPage === pageNum
                     ? "bg-blue-600 text-white"
                     : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                 }`}
               >
-                {i + 1}
+                {pageNum}
               </button>
             ))}
 
+            {/* 생략 표시 (마지막 그룹이 아닌 경우) */}
+            {getPageButtonsToShow()[getPageButtonsToShow().length - 1] < totalPages && (
+              <span className="px-2 text-gray-500 text-sm">...</span>
+            )}
+
+            {/* 다음 */}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className="px-3 py-2 rounded text-sm font-medium transition-colors bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              다음
+              »
+            </button>
+
+            {/* 마지막 페이지로 */}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 rounded text-sm font-medium transition-colors bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              »»
             </button>
           </div>
         )}
