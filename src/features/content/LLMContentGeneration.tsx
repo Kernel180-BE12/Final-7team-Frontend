@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { usePipelineData } from "@/hooks/usePipelineData"
 import { useAppStore } from "@/store/appStore"
 
-// 임시 더미 데이터 (나중에 monitoringStore나 별도 스토어로 이동 예정)
-const dummyContentGeneration = {
+// 사용되지 않는 더미 데이터 - 제거 예정
+/* const dummyContentGeneration = {
   selectedModel: 'OpenAI GPT-4',
   progress: 100,
   generatedCharacters: 2850,
@@ -52,7 +52,7 @@ const dummyContentGeneration = {
       timestamp: '08:07',
     },
   ],
-}
+} */
 
 interface LLMContentGenerationProps {
   compact?: boolean; // 대시보드용 컴팩트 모드
@@ -66,36 +66,40 @@ export default function LLMContentGeneration({ compact = false }: LLMContentGene
   const { schedule } = useAppStore()
   const selectedModel = (schedule as any).aiModel
   
-  // 파이프라인에서 콘텐츠 생성 데이터가 있으면 사용, 개발 환경이거나 데이터가 없으면 더미 데이터 사용
+  // 실제 파이프라인 데이터 사용
   const contentResult = pipelineData.stageResults.contentGeneration || null
   const contentProgress = pipelineData.progress.content_generation || { status: 'pending', progress: 0 }
-  
-  // 개발 환경이거나 데이터가 없으면 더미 데이터 사용
-  let contentGeneration;
-  if (import.meta.env.DEV || !contentResult) {
-    contentGeneration = { ...dummyContentGeneration, selectedModel };
-  } else {
-    contentGeneration = {
-      selectedModel,
-      progress: contentProgress.progress,
-      generatedCharacters: contentResult.contents?.[0]?.wordCount || 0,
-      generatedTags: contentResult.contents?.length || 0,
-      logs: [
-        {
-          id: '1',
-          title: `블로그 글 작성 ${contentProgress.status === 'completed' ? '완료' : contentProgress.status === 'running' ? '진행 중' : '대기 중'}`,
-          description: `${selectedModel}로 콘텐츠 생성 ${contentProgress.status === 'completed' ? '완료' : '중...'}`,
-          timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        },
-        ...(contentProgress.status === 'completed' && contentResult ? [{
-          id: '2',
-          title: '제목 및 태그 생성 완료',
-          description: `${contentResult.contents?.length || 0}개 콘텐츠와 매력적인 제목 생성`,
-          timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        }] : [])
-      ],
-    };
-  }
+
+  // 파이프라인이 실행 중이거나 데이터가 있는 경우
+  const hasData = pipelineData.isRunning || contentResult !== null
+
+  const contentGeneration = hasData ? {
+    selectedModel,
+    progress: contentProgress.progress,
+    generatedCharacters: contentResult?.contents?.[0]?.wordCount || 0,
+    generatedTags: contentResult?.contents?.length || 0,
+    generatedContent: contentResult?.contents?.[0] ? {
+      title: contentResult.contents[0].title,
+      content: contentResult.contents[0].contentPreview,
+      tags: [], // API에서 태그 정보가 오면 사용
+      wordCount: contentResult.contents[0].wordCount,
+      summary: `${contentResult.contents[0].contentType} 콘텐츠 ${contentResult.contents[0].wordCount}자`
+    } : null,
+    logs: [
+      {
+        id: '1',
+        title: `콘텐츠 생성 ${contentProgress.status === 'completed' ? '완료' : contentProgress.status === 'running' ? '진행 중' : '대기 중'}`,
+        description: `${selectedModel}로 콘텐츠 생성 ${contentProgress.status === 'completed' ? '완료' : '중...'}`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      },
+      ...(contentProgress.status === 'completed' && contentResult ? [{
+        id: '2',
+        title: '제목 및 태그 생성 완료',
+        description: `${contentResult.contents?.length || 0}개 콘텐츠와 매력적인 제목 생성`,
+        timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }] : [])
+    ],
+  } : null
 
 
   return (
@@ -109,42 +113,65 @@ export default function LLMContentGeneration({ compact = false }: LLMContentGene
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 pt-0 flex-1 overflow-y-auto">
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <label className="block mb-1 font-semibold text-gray-800 text-sm">현재 사용 중인 AI 모델</label>
-          <div className="text-lg font-medium text-gray-700">{contentGeneration.selectedModel}</div>
-          <div className="text-xs text-gray-500 mt-1">※ 모델 변경은 스케줄 관리에서 가능합니다</div>
-        </div>
-
-        {contentGeneration.logs.map((log, index) => (
-          <div key={log.id} className={`flex justify-between items-center py-3 mb-3 ${index < contentGeneration.logs.length - 1 ? 'border-b border-gray-100' : ''}`}>
-            <div className="flex-1">
-              <div className="font-medium text-sm">{log.title}</div>
-              <div className="text-xs text-gray-600">{log.description}</div>
+        {contentGeneration ? (
+          <>
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <label className="block mb-1 font-semibold text-gray-800 text-sm">현재 사용 중인 AI 모델</label>
+              <div className="text-lg font-medium text-gray-700">{contentGeneration.selectedModel}</div>
+              <div className="text-xs text-gray-500 mt-1">※ 모델 변경은 스케줄 관리에서 가능합니다</div>
             </div>
-            <div className="text-xs text-gray-600">{log.timestamp}</div>
-          </div>
-        ))}
 
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden my-3">
-          <div
-            className="progress-fill h-full bg-gray-600 rounded-full transition-all duration-300"
-            style={{ width: `${contentGeneration.progress}%` }}
-          ></div>
-        </div>
+            {contentGeneration.logs.map((log, index) => (
+              <div key={log.id} className={`flex justify-between items-center py-3 mb-3 ${index < contentGeneration.logs.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                <div className="flex-1">
+                  <div className="font-medium text-sm">{log.title}</div>
+                  <div className="text-xs text-gray-600">{log.description}</div>
+                </div>
+                <div className="text-xs text-gray-600">{log.timestamp}</div>
+              </div>
+            ))}
 
-        <div className="flex justify-between mt-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">{contentGeneration.generatedCharacters.toLocaleString()}</div>
-            <div className="text-xs text-gray-600">생성 글자 수</div>
+            {/* 진행률 표시 */}
+            {pipelineData.isRunning && contentProgress.status === 'running' && (
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden my-3">
+                <div
+                  className="progress-fill h-full bg-gray-600 rounded-full transition-all duration-300"
+                  style={{ width: `${contentGeneration.progress}%` }}
+                ></div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-700">{contentGeneration.generatedCharacters.toLocaleString()}</div>
+                <div className="text-xs text-gray-600">생성 글자 수</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-700">{contentGeneration.generatedTags}</div>
+                <div className="text-xs text-gray-600">생성 콘텐츠 수</div>
+              </div>
+            </div>
+          </>
+        ) : (
+          // 데이터가 없을 때 대체 화면
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">콘텐츠 데이터 없음</h3>
+            <p className="text-sm text-gray-500 mb-2">파이프라인을 실행하면 AI가 생성한 콘텐츠를 확인할 수 있습니다.</p>
+            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-4">
+              <div className="font-medium">AI 모델: {selectedModel}</div>
+              <div className="text-xs text-gray-500 mt-1">스케줄 관리에서 변경 가능</div>
+            </div>
+            <div className="text-xs text-gray-400">스케줄 관리에서 '즉시 실행' 버튼을 클릭해보세요.</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-700">{contentGeneration.generatedTags}</div>
-            <div className="text-xs text-gray-600">생성 태그 수</div>
-          </div>
-        </div>
+        )}
 
         {/* 생성된 콘텐츠 결과 표시 */}
-        {contentGeneration.progress === 100 && contentGeneration.generatedContent && (
+        {contentGeneration && contentGeneration.progress === 100 && contentGeneration.generatedContent && (
           <div className="mt-6 space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">📝 생성된 콘텐츠</h3>
             

@@ -17,77 +17,7 @@ export default function PipelineStatus() {
   );
   const activeExecutions = getActiveExecutionsList();
 
-  // 개발 환경에서 샘플 데이터 추가 (한 번만)
-  useEffect(() => {
-    if (import.meta.env.DEV && activeExecutions.length === 0) {
-      // 샘플 실행 데이터 1 - 실행 중
-      setActiveExecution(1001, {
-        executionId: 1001,
-        overallStatus: "running",
-        startedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5분 전 시작
-        currentStage: "상품 크롤링",
-        progress: {
-          keyword_extraction: { status: "completed", progress: 100 },
-          product_crawling: { status: "running", progress: 45 },
-          content_generation: { status: "pending", progress: 0 },
-          content_publishing: { status: "pending", progress: 0 },
-        },
-        stageResults: {
-          keywordExtraction: [
-            { keyword: "겨울 패딩", relevanceScore: 0.95, category: "패션" },
-            { keyword: "패딩 추천", relevanceScore: 0.87, category: "의류" },
-            { keyword: "겨울 코트", relevanceScore: 0.72, category: "패션" }
-          ],
-          productCrawling: [
-            { title: "겨울 패딩 A", price: 89000, platform: "coupang", productUrl: "https://coupang.com/product1" },
-            { title: "겨울 패딩 B", price: 120000, platform: "naver", productUrl: "https://naver.com/product2" }
-          ],
-          contentGeneration: null,
-          contentPublishing: null
-        },
-        logs: [],
-      });
-
-      // 샘플 실행 데이터 2 - 일시 정지
-      setActiveExecution(1002, {
-        executionId: 1002,
-        overallStatus: "paused",
-        startedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15분 전 시작
-        currentStage: "콘텐츠 생성",
-        progress: {
-          keyword_extraction: { status: "completed", progress: 100 },
-          product_crawling: { status: "completed", progress: 100 },
-          content_generation: { status: "running", progress: 75 },
-          content_publishing: { status: "pending", progress: 0 },
-        },
-        stageResults: {
-          keywordExtraction: [
-            { keyword: "겨울 패딩", relevanceScore: 0.95, category: "패션" },
-            { keyword: "패딩 추천", relevanceScore: 0.87, category: "의류" },
-            { keyword: "겨울 코트", relevanceScore: 0.72, category: "패션" }
-          ],
-          productCrawling: [
-            { title: "겨울 패딩 A", price: 89000, platform: "coupang", productUrl: "https://coupang.com/product1" },
-            { title: "겨울 패딩 B", price: 120000, platform: "naver", productUrl: "https://naver.com/product2" },
-            { title: "겨울 패딩 C", price: 150000, platform: "gmarket", productUrl: "https://gmarket.co.kr/product3" }
-          ],
-          contentGeneration: {
-            contents: [
-              {
-                title: "겨울 패딩 추천 가이드",
-                contentType: "blog",
-                wordCount: 1200,
-                contentPreview: "겨울 패딩 추천에 관한 블로그 콘텐츠입니다. 올해 겨울을 따뜻하게 보내기 위한 최고의 패딩을 소개합니다..."
-              }
-            ],
-            totalCount: 1
-          },
-          contentPublishing: null
-        },
-        logs: [],
-      });
-    }
-  }, []); // 빈 의존성 배열로 한 번만 실행
+  // 샘플 데이터 제거 - 실제 API 데이터만 사용
 
   // 활성 파이프라인들의 상태를 주기적으로 확인하고 각 단계별 데이터를 통합 관리
   useEffect(() => {
