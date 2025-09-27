@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePipelineStore } from "@/store/pipelineStore";
 import { useUiStore } from "@/store/uiStore";
 import { pipelineApi } from "@/lib/api";
@@ -15,33 +15,49 @@ export default function PipelineStatus() {
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [errorCount, setErrorCount] = useState(0);
   const activeExecutions = getActiveExecutionsList();
 
   // 샘플 데이터 제거 - 실제 API 데이터만 사용
 
-  // 활성 파이프라인들의 상태를 주기적으로 확인하고 각 단계별 데이터를 통합 관리
-  useEffect(() => {
-    const fetchActiveStatuses = async () => {
-      if (activeExecutions.length === 0) return;
+  // 단순한 폴링 함수 (useCallback 제거)
+  const executePolling = async () => {
+    try {
+      // 1. 새로운 실행 감지
+      const allExecutions = await pipelineApi.getAllExecutions();
+      const runningExecutions = allExecutions.filter(execResponse =>
+        execResponse.success && (
+          execResponse.data.overallStatus === "running" ||
+          execResponse.data.overallStatus === "paused"
+        )
+      );
 
-      try {
-        setLoading("pipeline", true);
-        clearError("pipeline");
+      // 새로운 실행들을 활성 목록에 추가
+      const currentActiveExecutions = getActiveExecutionsList();
+      runningExecutions.forEach(execResponse => {
+        const execution = execResponse.data;
+        const existingExecution = currentActiveExecutions.find(
+          active => active.executionId === execution.executionId
+        );
 
-        for (const execution of activeExecutions) {
-          if (
-            execution.overallStatus === "running" ||
-            execution.overallStatus === "paused"
-          ) {
+        if (!existingExecution) {
+          console.log(`새로운 파이프라인 실행 감지: ${execution.executionId}`);
+          setActiveExecution(execution.executionId, execution);
+        }
+      });
+
+      // 2. 기존 활성 실행 상태 업데이트
+      const updatedActiveExecutions = getActiveExecutionsList();
+      if (updatedActiveExecutions.length > 0) {
+        for (const execution of updatedActiveExecutions) {
+          if (execution.overallStatus === "running" || execution.overallStatus === "paused") {
             try {
-              const response: PipelineStatusResponse =
-                await pipelineApi.getStatus(execution.executionId);
-
-              // 파이프라인 데이터 통합 관리 - 각 단계별 결과 데이터도 포함
+              const response = await pipelineApi.getStatus(execution.executionId);
+              // 상태 업데이트 로직 (기존과 동일)
               const updatedExecution = {
                 ...response.data,
                 stageResults: {
-                  keywordExtraction: response.data.progress.keyword_extraction.status === 'completed' 
+                  keywordExtraction: response.data.progress.keyword_extraction.status === 'completed'
                     ? response.data.results?.keywords || [] : [],
                   productCrawling: response.data.progress.product_crawling.status === 'completed'
                     ? response.data.results?.products || [] : [],
@@ -52,49 +68,46 @@ export default function PipelineStatus() {
                 }
               };
 
-              // 완료된 경우 활성 목록에서 제거
-              if (
-                response.data.overallStatus === "completed" ||
-                response.data.overallStatus === "failed"
-              ) {
+              if (response.data.overallStatus === "completed" || response.data.overallStatus === "failed") {
                 removeActiveExecution(execution.executionId);
               } else {
                 setActiveExecution(execution.executionId, updatedExecution);
               }
             } catch (error) {
-              console.error(
-                `Failed to fetch status for execution ${execution.executionId}:`,
-                error
-              );
+              console.error(`Failed to fetch status for execution ${execution.executionId}:`, error);
             }
           }
         }
-      } catch (err) {
-        console.error("Pipeline status fetch error:", err);
-        setError("pipeline", "파이프라인 상태 조회 중 오류가 발생했습니다.");
-      } finally {
-        setLoading("pipeline", false);
       }
-    };
 
-    // 개발 환경에서는 API 호출 비활성화 (샘플 데이터 사용)
-    if (!import.meta.env.DEV && activeExecutions.length > 0) {
-      fetchActiveStatuses(); // 즉시 한 번 실행
-      const interval = setInterval(fetchActiveStatuses, 2000); // 2초마다 상태 확인
-      setRefreshInterval(interval);
-    } else {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-        setRefreshInterval(null);
-      }
+      setErrorCount(0); // 성공 시 오류 카운트 리셋
+    } catch (error) {
+      console.error("폴링 중 오류:", error);
+      setErrorCount(prev => {
+        const newCount = prev + 1;
+        if (newCount >= 5) {
+          console.error("연속 오류 5회 발생, 폴링 중단");
+          setError("pipeline", "파이프라인 상태 조회 서비스에 문제가 발생했습니다.");
+        }
+        return newCount;
+      });
     }
+  };
+
+  // 단순한 폴링 useEffect
+  useEffect(() => {
+    // API 호출 활성화 (개발/프로덕션 모두)
+    executePolling(); // 즉시 한 번 실행
+    const interval = setInterval(executePolling, 15000); // 15초 고정 간격
+    setRefreshInterval(interval);
 
     return () => {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
+      if (interval) {
+        clearInterval(interval);
       }
     };
-  }, [activeExecutions.length]);
+  }, []); // 의존성 배열 비우기 - 컴포넌트 마운트시에만 실행
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
