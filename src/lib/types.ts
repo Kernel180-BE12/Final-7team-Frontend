@@ -257,6 +257,8 @@ export type StageResult =
 export interface PipelineStageProgress {
   status: "completed" | "running" | "pending" | "failed";
   progress: number;
+  startedAt?: string;
+  completedAt?: string;
   result?: StageResult;
 }
 
@@ -264,6 +266,7 @@ export interface PipelineStatusResponse {
   success: boolean;
   data: {
     executionId: number;
+    scheduleId?: number; // 스케줄에서 실행된 경우에만 포함
     overallStatus: "running" | "completed" | "failed" | "paused";
     startedAt: string;
     completedAt?: string;

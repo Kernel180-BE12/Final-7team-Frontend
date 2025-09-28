@@ -398,6 +398,7 @@ export default function MonitoringDashboard() {
               )}
             </CardContent>
           </Card>
+
         </div>
       </div>
     </div>
