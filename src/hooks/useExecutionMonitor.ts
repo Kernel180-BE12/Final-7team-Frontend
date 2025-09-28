@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { pipelineApi } from "@/lib/api";
-import type { PipelineExecutionSummary, PipelineStatusResponse } from "@/lib/types";
+import type { PipelineExecutionSummary } from "@/lib/types";
 
 export interface ExecutionSummary {
   total: number;
