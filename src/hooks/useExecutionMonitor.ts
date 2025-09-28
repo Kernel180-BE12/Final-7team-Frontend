@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { pipelineApi } from "@/lib/api";
-import type { PipelineStatusResponse } from "@/lib/types";
+import type { PipelineExecutionSummary, PipelineStatusResponse } from "@/lib/types";
 
 export interface ExecutionSummary {
   total: number;
   running: number;
   completed: number;
   failed: number;
-  recentExecutions: PipelineStatusResponse[];
+  recentExecutions: PipelineExecutionSummary[];
 }
 
 export interface UseExecutionMonitorOptions {
@@ -23,7 +23,7 @@ export function useExecutionMonitor(options: UseExecutionMonitorOptions = {}) {
     includeCompleted = false
   } = options;
 
-  const [executions, setExecutions] = useState<PipelineStatusResponse[]>([]);
+  const [executions, setExecutions] = useState<PipelineExecutionSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +34,9 @@ export function useExecutionMonitor(options: UseExecutionMonitorOptions = {}) {
   // 실행 목록 요약 계산
   const summary: ExecutionSummary = {
     total: executions.length,
-    running: executions.filter(e => e.data.overallStatus === 'running').length,
-    completed: executions.filter(e => e.data.overallStatus === 'completed').length,
-    failed: executions.filter(e => e.data.overallStatus === 'failed').length,
+    running: executions.filter(e => e.overallStatus === 'running').length,
+    completed: executions.filter(e => e.overallStatus === 'completed').length,
+    failed: executions.filter(e => e.overallStatus === 'failed').length,
     recentExecutions: executions.slice(0, 5)
   };
 
@@ -47,9 +47,7 @@ export function useExecutionMonitor(options: UseExecutionMonitorOptions = {}) {
       const allExecutions = await pipelineApi.getAllExecutions();
 
       const filteredExecutions = allExecutions.filter(execution => {
-        if (!execution.success) return false;
-
-        const status = execution.data.overallStatus;
+        const status = execution.overallStatus;
         if (status === 'running' || status === 'paused' || status === 'failed') {
           return true;
         }
