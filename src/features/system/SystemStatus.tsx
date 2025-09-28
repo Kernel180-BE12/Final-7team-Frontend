@@ -75,14 +75,7 @@ export default function SystemStatus() {
     fetchSystemHealth();
   }, []);
 
-  // 5초마다 자동 새로고침
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchSystemHealth();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // 자동 새로고침 제거 - 수동 새로고침만 사용
 
   const getStatusColor = (status: string) => {
     switch (status) {
