@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { useExecutionMonitor } from "../../hooks/useExecutionMonitor";
-import { pipelineApi } from "@/lib/api";
 import type {
   PipelineStatusResponse,
   PipelineStageProgress,
 } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // Progress component removed - using div instead
 // Badge component removed - using span instead
 
