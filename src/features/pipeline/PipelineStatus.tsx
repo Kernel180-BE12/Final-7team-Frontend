@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useExecutionMonitor } from "../../hooks/useExecutionMonitor";
 import type {
   PipelineStatusResponse,
-  PipelineStageProgress,
 } from "@/lib/types";
 // Progress component removed - using div instead
 // Badge component removed - using span instead
@@ -19,17 +18,17 @@ export default function PipelineStatus() {
   useEffect(() => {
     const fetchDetails = async () => {
       for (const execution of executions) {
-        if (execution.data.overallStatus === 'running' || execution.data.overallStatus === 'paused') {
+        if (execution.overallStatus === 'running' || execution.overallStatus === 'paused') {
           try {
-            const detail = await getExecutionDetail(execution.data.executionId);
+            const detail = await getExecutionDetail(execution.executionId);
             if (detail) {
               setDetailStates(prev => ({
                 ...prev,
-                [execution.data.executionId]: detail
+                [execution.executionId]: detail
               }));
             }
           } catch (err) {
-            console.error(`Failed to get detail for execution ${execution.data.executionId}:`, err);
+            console.error(`Failed to get detail for execution ${execution.executionId}:`, err);
           }
         }
       }
@@ -41,7 +40,7 @@ export default function PipelineStatus() {
   }, [executions, getExecutionDetail]);
 
   const activeExecutions = executions.filter(exec =>
-    exec.data.overallStatus === 'running' || exec.data.overallStatus === 'paused'
+    exec.overallStatus === 'running' || exec.overallStatus === 'paused'
   );
 
   // 실행 데이터를 상세 정보와 결합
@@ -77,17 +76,6 @@ export default function PipelineStatus() {
     }
   };
 
-  const getProgressPercentage = (executionId: number) => {
-    const detail = detailStates[executionId];
-    if (!detail) return 0;
-
-    const stages = Object.values(detail.data.progress);
-    const totalProgress = stages.reduce(
-      (sum: number, stage: PipelineStageProgress) => sum + stage.progress,
-      0
-    );
-    return Math.round(totalProgress / stages.length);
-  };
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
@@ -174,29 +162,29 @@ export default function PipelineStatus() {
       ) : (
         <div className="space-y-4">
           {activeExecutions.map((execution) => {
-            const detail = detailStates[execution.data.executionId];
+            const detail = detailStates[execution.executionId];
             return (
-              <div key={execution.data.executionId} className="border rounded-lg p-4">
+              <div key={execution.executionId} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center">
                     <span className="text-sm font-medium text-gray-700">
-                      실행 ID: {execution.data.executionId}
+                      실행 ID: {execution.executionId}
                     </span>
-                    {execution.data.scheduleId && (
+                    {execution.scheduleId && (
                       <span className="ml-2 text-xs text-gray-500">
-                        (스케줄 {execution.data.scheduleId})
+                        (스케줄 {execution.scheduleId})
                       </span>
                     )}
                     <span
                       className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        execution.data.overallStatus
+                        execution.overallStatus
                       )}`}
                     >
-                      {getStatusText(execution.data.overallStatus)}
+                      {getStatusText(execution.overallStatus)}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {getProgressPercentage(execution.data.executionId)}% 완료
+                    {execution.overallProgress}% 완료
                   </span>
                 </div>
 
@@ -204,7 +192,7 @@ export default function PipelineStatus() {
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                   <div
                     className="bg-purple-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${getProgressPercentage(execution.data.executionId)}%` }}
+                    style={{ width: `${execution.overallProgress}%` }}
                   ></div>
                 </div>
 
@@ -223,12 +211,12 @@ export default function PipelineStatus() {
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  현재 단계: {detail?.data.currentStage || execution.data.currentStage || "준비 중"}
+                  현재 단계: {detail?.data.currentStage || execution.currentStage || "준비 중"}
                 </div>
 
                 <div className="text-xs text-gray-400 mt-1">
                   시작 시간:{" "}
-                  {new Date(execution.data.startedAt).toLocaleString("ko-KR")}
+                  {new Date(execution.startedAt).toLocaleString("ko-KR")}
                 </div>
               </div>
             );
