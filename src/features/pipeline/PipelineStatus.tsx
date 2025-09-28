@@ -1,112 +1,52 @@
-import { useEffect, useState, useCallback } from "react";
-import { usePipelineStore } from "@/store/pipelineStore";
-import { useUiStore } from "@/store/uiStore";
+import { useState, useEffect } from "react";
+import { useExecutionMonitor } from "../../hooks/useExecutionMonitor";
 import { pipelineApi } from "@/lib/api";
 import type {
   PipelineStatusResponse,
   PipelineStageProgress,
 } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Progress component removed - using div instead
+// Badge component removed - using span instead
 
 export default function PipelineStatus() {
-  const { getActiveExecutionsList, setActiveExecution, removeActiveExecution } =
-    usePipelineStore();
-  const { isLoading, errors, setLoading, setError, clearError } = useUiStore();
+  const { executions, summary, isLoading, error, getExecutionDetail } = useExecutionMonitor({
+    pollingInterval: 15000,
+    includeCompleted: true // 모든 실행 포함
+  });
 
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(
-    null
-  );
-  const [errorCount, setErrorCount] = useState(0);
-  const activeExecutions = getActiveExecutionsList();
+  const [detailStates, setDetailStates] = useState<Record<number, PipelineStatusResponse>>({});
 
-  // 샘플 데이터 제거 - 실제 API 데이터만 사용
-
-  // 단순한 폴링 함수 (useCallback 제거)
-  const executePolling = async () => {
-    try {
-      // 1. 새로운 실행 감지
-      const allExecutions = await pipelineApi.getAllExecutions();
-      const runningExecutions = allExecutions.filter(execResponse =>
-        execResponse.success && (
-          execResponse.data.overallStatus === "running" ||
-          execResponse.data.overallStatus === "paused"
-        )
-      );
-
-      // 새로운 실행들을 활성 목록에 추가
-      const currentActiveExecutions = getActiveExecutionsList();
-      runningExecutions.forEach(execResponse => {
-        const execution = execResponse.data;
-        const existingExecution = currentActiveExecutions.find(
-          active => active.executionId === execution.executionId
-        );
-
-        if (!existingExecution) {
-          console.log(`새로운 파이프라인 실행 감지: ${execution.executionId}`);
-          setActiveExecution(execution.executionId, execution);
-        }
-      });
-
-      // 2. 기존 활성 실행 상태 업데이트
-      const updatedActiveExecutions = getActiveExecutionsList();
-      if (updatedActiveExecutions.length > 0) {
-        for (const execution of updatedActiveExecutions) {
-          if (execution.overallStatus === "running" || execution.overallStatus === "paused") {
-            try {
-              const response = await pipelineApi.getStatus(execution.executionId);
-              // 상태 업데이트 로직 (기존과 동일)
-              const updatedExecution = {
-                ...response.data,
-                stageResults: {
-                  keywordExtraction: response.data.progress.keyword_extraction.status === 'completed'
-                    ? response.data.results?.keywords || [] : [],
-                  productCrawling: response.data.progress.product_crawling.status === 'completed'
-                    ? response.data.results?.products || [] : [],
-                  contentGeneration: response.data.progress.content_generation.status === 'completed'
-                    ? response.data.results?.content || null : null,
-                  contentPublishing: response.data.progress.content_publishing.status === 'completed'
-                    ? response.data.results?.publishingStatus || null : null
-                }
-              };
-
-              if (response.data.overallStatus === "completed" || response.data.overallStatus === "failed") {
-                removeActiveExecution(execution.executionId);
-              } else {
-                setActiveExecution(execution.executionId, updatedExecution);
-              }
-            } catch (error) {
-              console.error(`Failed to fetch status for execution ${execution.executionId}:`, error);
+  // 실행 중인 파이프라인의 상세 정보 가져오기
+  useEffect(() => {
+    const fetchDetails = async () => {
+      for (const execution of executions) {
+        if (execution.data.overallStatus === 'running' || execution.data.overallStatus === 'paused') {
+          try {
+            const detail = await getExecutionDetail(execution.data.executionId);
+            if (detail) {
+              setDetailStates(prev => ({
+                ...prev,
+                [execution.data.executionId]: detail
+              }));
             }
+          } catch (err) {
+            console.error(`Failed to get detail for execution ${execution.data.executionId}:`, err);
           }
         }
       }
-
-      setErrorCount(0); // 성공 시 오류 카운트 리셋
-    } catch (error) {
-      console.error("폴링 중 오류:", error);
-      setErrorCount(prev => {
-        const newCount = prev + 1;
-        if (newCount >= 5) {
-          console.error("연속 오류 5회 발생, 폴링 중단");
-          setError("pipeline", "파이프라인 상태 조회 서비스에 문제가 발생했습니다.");
-        }
-        return newCount;
-      });
-    }
-  };
-
-  // 단순한 폴링 useEffect
-  useEffect(() => {
-    // API 호출 활성화 (개발/프로덕션 모두)
-    executePolling(); // 즉시 한 번 실행
-    const interval = setInterval(executePolling, 15000); // 15초 고정 간격
-    setRefreshInterval(interval);
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
     };
-  }, []); // 의존성 배열 비우기 - 컴포넌트 마운트시에만 실행
+
+    if (executions.length > 0) {
+      fetchDetails();
+    }
+  }, [executions, getExecutionDetail]);
+
+  const activeExecutions = executions.filter(exec =>
+    exec.data.overallStatus === 'running' || exec.data.overallStatus === 'paused'
+  );
+
+  // 실행 데이터를 상세 정보와 결합
 
 
   const getStatusColor = (status: string) => {
@@ -139,8 +79,11 @@ export default function PipelineStatus() {
     }
   };
 
-  const getProgressPercentage = (execution: PipelineStatusResponse["data"]) => {
-    const stages = Object.values(execution.progress);
+  const getProgressPercentage = (executionId: number) => {
+    const detail = detailStates[executionId];
+    if (!detail) return 0;
+
+    const stages = Object.values(detail.data.progress);
     const totalProgress = stages.reduce(
       (sum: number, stage: PipelineStageProgress) => sum + stage.progress,
       0
@@ -175,16 +118,36 @@ export default function PipelineStatus() {
           </div>
         </div>
 
-        {isLoading.pipeline && (
+        {isLoading && (
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
         )}
       </div>
 
-      {errors.pipeline && (
+      {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          {errors.pipeline}
+          {error}
         </div>
       )}
+
+      {/* 요약 통계 */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-2xl font-bold text-blue-600">{summary.running}</div>
+          <div className="text-xs text-gray-600">실행 중</div>
+        </div>
+        <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-2xl font-bold text-green-600">{summary.completed}</div>
+          <div className="text-xs text-gray-600">완료</div>
+        </div>
+        <div className="text-center p-3 bg-red-50 rounded-lg">
+          <div className="text-2xl font-bold text-red-600">{summary.failed}</div>
+          <div className="text-xs text-gray-600">실패</div>
+        </div>
+        <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-2xl font-bold text-gray-700">{summary.total}</div>
+          <div className="text-xs text-gray-600">전체</div>
+        </div>
+      </div>
 
       {activeExecutions.length === 0 ? (
         <div className="text-center py-8">
@@ -212,58 +175,66 @@ export default function PipelineStatus() {
         </div>
       ) : (
         <div className="space-y-4">
-          {activeExecutions.map((execution) => (
-            <div key={execution.executionId} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <span className="text-sm font-medium text-gray-700">
-                    실행 ID: {execution.executionId}
-                  </span>
-                  <span
-                    className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      execution.overallStatus
-                    )}`}
-                  >
-                    {getStatusText(execution.overallStatus)}
+          {activeExecutions.map((execution) => {
+            const detail = detailStates[execution.data.executionId];
+            return (
+              <div key={execution.data.executionId} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-gray-700">
+                      실행 ID: {execution.data.executionId}
+                    </span>
+                    {execution.data.scheduleId && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        (스케줄 {execution.data.scheduleId})
+                      </span>
+                    )}
+                    <span
+                      className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        execution.data.overallStatus
+                      )}`}
+                    >
+                      {getStatusText(execution.data.overallStatus)}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {getProgressPercentage(execution.data.executionId)}% 완료
                   </span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {getProgressPercentage(execution)}% 완료
-                </span>
-              </div>
 
-              {/* 진행률 바 */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                <div
-                  className="bg-purple-600 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${getProgressPercentage(execution)}%` }}
-                ></div>
-              </div>
+                {/* 진행률 바 */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                  <div
+                    className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${getProgressPercentage(execution.data.executionId)}%` }}
+                  ></div>
+                </div>
 
-              {/* 현재 단계 */}
-              <div className="flex items-center text-sm text-gray-600">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                현재 단계: {execution.currentStage || "준비 중"}
-              </div>
+                {/* 현재 단계 */}
+                <div className="flex items-center text-sm text-gray-600">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  현재 단계: {detail?.data.currentStage || execution.data.currentStage || "준비 중"}
+                </div>
 
-              <div className="text-xs text-gray-400 mt-1">
-                시작 시간:{" "}
-                {new Date(execution.startedAt).toLocaleString("ko-KR")}
+                <div className="text-xs text-gray-400 mt-1">
+                  시작 시간:{" "}
+                  {new Date(execution.data.startedAt).toLocaleString("ko-KR")}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
