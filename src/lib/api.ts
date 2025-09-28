@@ -20,11 +20,10 @@ import type {
   MonitoringStatusResponse,
 } from "./types";
 
-
 // API 클라이언트 설정
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/v1",
-  timeout: 10000,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -45,19 +44,21 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const apiError: CustomApiError = {
-      message: '알 수 없는 오류가 발생했습니다.',
+      message: "알 수 없는 오류가 발생했습니다.",
       isNetworkError: false,
       isTimeout: false,
       isServerError: false,
     };
 
-    if (error.code === 'ECONNABORTED') {
+    if (error.code === "ECONNABORTED") {
       // 타임아웃 오류
-      apiError.message = 'API 요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.';
+      apiError.message =
+        "API 요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.";
       apiError.isTimeout = true;
-    } else if (error.code === 'ERR_NETWORK' || !error.response) {
+    } else if (error.code === "ERR_NETWORK" || !error.response) {
       // 네트워크 오류 (서버 연결 불가)
-      apiError.message = 'API 서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.';
+      apiError.message =
+        "API 서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.";
       apiError.isNetworkError = true;
     } else if (error.response) {
       // 서버 응답이 있는 경우
@@ -69,23 +70,27 @@ apiClient.interceptors.response.use(
         apiError.isServerError = true;
       } else if (status === 404) {
         console.warn(`API 엔드포인트가 구현되지 않음: ${error.config?.url}`);
-        apiError.message = '해당 기능이 아직 구현되지 않았습니다.';
+        apiError.message = "해당 기능이 아직 구현되지 않았습니다.";
         // 404는 구현되지 않은 API로 처리
         apiError.isNotImplemented = true;
         return Promise.reject(apiError);
       } else if (status === 401) {
-        apiError.message = '인증이 필요합니다. 다시 로그인해주세요.';
+        apiError.message = "인증이 필요합니다. 다시 로그인해주세요.";
       } else if (status === 403) {
-        apiError.message = '접근 권한이 없습니다.';
+        apiError.message = "접근 권한이 없습니다.";
       } else {
-        apiError.message = error.response.data?.message || `API 오류가 발생했습니다. (${status})`;
+        apiError.message =
+          error.response.data?.message ||
+          `API 오류가 발생했습니다. (${status})`;
       }
     }
 
     // 전역 오류 이벤트 발생
-    window.dispatchEvent(new CustomEvent('api-error', { 
-      detail: apiError 
-    }));
+    window.dispatchEvent(
+      new CustomEvent("api-error", {
+        detail: apiError,
+      })
+    );
 
     return Promise.reject(apiError);
   }
@@ -94,13 +99,12 @@ apiClient.interceptors.response.use(
 // API 연결 상태 체크 함수
 export const checkApiConnection = async (): Promise<boolean> => {
   try {
-    await apiClient.get('/system/health', { timeout: 3000 });
+    await apiClient.get("/system/health", { timeout: 3000 });
     return true;
   } catch {
     return false;
   }
 };
-
 
 // API 함수들
 export const menuApi = {
@@ -143,7 +147,10 @@ export const scheduleApi = {
     page?: number;
     limit?: number;
   }): Promise<ScheduleListResponse> => {
-    const response = await apiClient.get<ScheduleListResponse>("/schedule/list", { params });
+    const response = await apiClient.get<ScheduleListResponse>(
+      "/schedule/list",
+      { params }
+    );
     return response.data;
   },
 
@@ -220,7 +227,9 @@ export const pipelineApi = {
   // 전체 실행 목록 조회 (요약 정보만)
   getAllExecutions: async (): Promise<PipelineExecutionSummary[]> => {
     try {
-      const response = await apiClient.get<PipelineExecutionsResponse>("/pipeline/executions");
+      const response = await apiClient.get<PipelineExecutionsResponse>(
+        "/pipeline/executions"
+      );
       return response.data.data;
     } catch (error: unknown) {
       const apiError = error as CustomApiError;
@@ -234,7 +243,7 @@ export const pipelineApi = {
             overallStatus: "running",
             startedAt: new Date(Date.now() - 600000).toISOString(), // 10분 전
             currentStage: "콘텐츠 생성",
-            overallProgress: 65
+            overallProgress: 65,
           },
           {
             executionId: 1002,
@@ -243,7 +252,7 @@ export const pipelineApi = {
             startedAt: new Date(Date.now() - 3600000).toISOString(), // 1시간 전
             completedAt: new Date(Date.now() - 1800000).toISOString(), // 30분 전
             currentStage: "콘텐츠 발행",
-            overallProgress: 100
+            overallProgress: 100,
           },
           {
             executionId: 1003,
@@ -251,8 +260,8 @@ export const pipelineApi = {
             startedAt: new Date(Date.now() - 7200000).toISOString(), // 2시간 전
             completedAt: new Date(Date.now() - 6600000).toISOString(), // 1시간 50분 전
             currentStage: "상품 크롤링",
-            overallProgress: 25
-          }
+            overallProgress: 25,
+          },
         ];
       }
       throw error;
@@ -302,8 +311,8 @@ export const pipelineApi = {
                   keywordsExtracted: 15,
                   productsCrawled: 42,
                   contentsGenerated: 8,
-                  contentsPublished: 6
-                }
+                  contentsPublished: 6,
+                },
               },
               {
                 executionId: 2,
@@ -315,16 +324,16 @@ export const pipelineApi = {
                   keywordsExtracted: 10,
                   productsCrawled: 25,
                   contentsGenerated: 0,
-                  contentsPublished: 0
-                }
-              }
+                  contentsPublished: 0,
+                },
+              },
             ],
             pagination: {
               currentPage: params?.page || 1,
               totalPages: 1,
-              totalCount: 2
-            }
-          }
+              totalCount: 2,
+            },
+          },
         };
       }
       throw error;
@@ -345,7 +354,9 @@ export const systemApi = {
   // 시스템 전체 상태 조회
   getHealth: async (): Promise<SystemHealthResponse> => {
     try {
-      const response = await apiClient.get<SystemHealthResponse>('/system/health');
+      const response = await apiClient.get<SystemHealthResponse>(
+        "/system/health"
+      );
       return response.data;
     } catch (error: unknown) {
       const apiError = error as CustomApiError;
@@ -357,14 +368,14 @@ export const systemApi = {
             status: "healthy",
             services: {
               database: "up",
-              llm: "up", 
+              llm: "up",
               crawler: "degraded",
-              scheduler: "up"
+              scheduler: "up",
             },
             version: "1.0.0-dev",
-            lastChecked: new Date().toISOString()
+            lastChecked: new Date().toISOString(),
           },
-          message: "시스템 상태 API가 구현 중입니다. 임시 데이터를 표시합니다."
+          message: "시스템 상태 API가 구현 중입니다. 임시 데이터를 표시합니다.",
         };
       }
       throw error;
@@ -372,9 +383,13 @@ export const systemApi = {
   },
 
   // 특정 서비스 상태 조회
-  getServiceStatus: async (serviceName: string): Promise<SystemHealthResponse> => {
+  getServiceStatus: async (
+    serviceName: string
+  ): Promise<SystemHealthResponse> => {
     try {
-      const response = await apiClient.get<SystemHealthResponse>(`/system/health/${serviceName}`);
+      const response = await apiClient.get<SystemHealthResponse>(
+        `/system/health/${serviceName}`
+      );
       return response.data;
     } catch (error: unknown) {
       const apiError = error as CustomApiError;
@@ -387,13 +402,13 @@ export const systemApi = {
             services: {
               database: serviceName === "database" ? "up" : "up",
               llm: serviceName === "llm" ? "up" : "up",
-              crawler: serviceName === "crawler" ? "degraded" : "up", 
-              scheduler: serviceName === "scheduler" ? "up" : "up"
+              crawler: serviceName === "crawler" ? "degraded" : "up",
+              scheduler: serviceName === "scheduler" ? "up" : "up",
             },
             version: "1.0.0-dev",
-            lastChecked: new Date().toISOString()
+            lastChecked: new Date().toISOString(),
           },
-          message: `${serviceName} 상태 API가 구현 중입니다. 임시 데이터를 표시합니다.`
+          message: `${serviceName} 상태 API가 구현 중입니다. 임시 데이터를 표시합니다.`,
         };
       }
       throw error;
@@ -409,13 +424,16 @@ export const logsApi = {
       executionId: filter.executionId,
       ...(filter.startDate && { startDate: filter.startDate }),
       ...(filter.endDate && { endDate: filter.endDate }),
-      ...(filter.status && filter.status !== 'all' && { status: filter.status }),
-      ...(filter.level && filter.level !== 'ALL' && { level: filter.level }),
+      ...(filter.status &&
+        filter.status !== "all" && { status: filter.status }),
+      ...(filter.level && filter.level !== "ALL" && { level: filter.level }),
       page: filter.page || 1,
       size: filter.size || 20,
     };
 
-    const response = await apiClient.get<JobLogsResponse>('/monitoring/logs', { params });
+    const response = await apiClient.get<JobLogsResponse>("/monitoring/logs", {
+      params,
+    });
     return response.data;
   },
 };
@@ -424,7 +442,9 @@ export const logsApi = {
 export const monitoringApi = {
   // 모니터링 통계 조회 API
   getStats: async (): Promise<MonitoringStatusResponse> => {
-    const response = await apiClient.get<MonitoringStatusResponse>('/monitoring/stats');
+    const response = await apiClient.get<MonitoringStatusResponse>(
+      "/monitoring/stats"
+    );
     return response.data;
   },
 };
