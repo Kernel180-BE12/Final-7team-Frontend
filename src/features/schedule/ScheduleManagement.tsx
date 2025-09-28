@@ -76,6 +76,22 @@ export default function ScheduleManagement() {
 
   // 파이프라인 즉시 실행 핸들러
   const handleImmediateExecution = async () => {
+    // 현재 시간 확인 alert
+    const currentTime = new Date();
+    const timeString = currentTime.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const confirmMessage = `즉시 실행하시겠습니까?\n\n실행 시간: ${timeString}`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     try {
       setLoading('pipeline', true);
       clearError('pipeline');
@@ -88,9 +104,10 @@ export default function ScheduleManagement() {
         return;
       }
 
-      // 즉시 실행을 위한 스케줄 등록 요청
+      // 즉시 실행을 위한 스케줄 등록 요청 (실행 시간을 현재 시간으로 설정)
       const executeResponse = await scheduleApi.createSchedule({
         ...schedule,
+        executionTime: currentTime.toTimeString().slice(0, 5), // HH:MM 형식
         executeImmediately: true
       });
 
@@ -110,9 +127,9 @@ export default function ScheduleManagement() {
           logs: []
         });
 
-        setSuccessMessage('pipeline', `파이프라인 실행이 시작되었습니다. (실행 ID: ${executeResponse.data.executionId})`);
+        setSuccessMessage('pipeline', `파이프라인 즉시 실행이 시작되었습니다.\n실행 시간: ${timeString}\n실행 ID: ${executeResponse.data.executionId}`);
       } else if (executeResponse.success) {
-        setSuccessMessage('pipeline', executeResponse.message || "스케줄이 성공적으로 등록되었습니다.");
+        setSuccessMessage('pipeline', `스케줄이 성공적으로 등록되었습니다.\n실행 시간: ${timeString}`);
       } else {
         setError('pipeline', executeResponse.message || "파이프라인 실행에 실패했습니다.");
       }
