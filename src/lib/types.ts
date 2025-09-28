@@ -189,6 +189,23 @@ export interface PipelineConfig {
   publishTargets: Array<"blog" | "social" | "website">;
 }
 
+// 파이프라인 실행 목록용 요약 타입 (가벼운 데이터)
+export interface PipelineExecutionSummary {
+  executionId: number;
+  scheduleId?: number;
+  overallStatus: "running" | "completed" | "failed" | "paused";
+  startedAt: string;
+  completedAt?: string;
+  currentStage: string;
+  overallProgress: number; // 전체 진행률 (0-100)
+}
+
+export interface PipelineExecutionsResponse {
+  success: boolean;
+  data: PipelineExecutionSummary[];
+  message?: string;
+}
+
 export interface PipelineExecuteRequest {
   keywordCount: number;
   contentCount: number;
